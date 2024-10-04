@@ -319,15 +319,17 @@ function ProjectView:_create_projects_header_line()
   self._projects_header_line:render(self._win.bufnr, GradleConfig.namespace, 2)
 end
 
----Setup key maps
+---@private Setup key maps
 function ProjectView:_setup_win_maps()
   self._win:map('n', { '<esc>', 'q' }, function()
     self:hide()
   end)
+
   self._win:map('n', 'E', function()
     local execute_view = ExecuteView.new()
     execute_view:mount()
   end)
+
   self._win:map('n', 'D', function()
     local node = self._tree:get_node()
     if node == nil then
@@ -347,9 +349,11 @@ function ProjectView:_setup_win_maps()
       end)
     end
   end, { noremap = true, nowait = true })
+
   self._win:map('n', '?', function()
     HelpView.mount()
   end)
+
   self._win:map('n', { '<enter>', '<2-LeftMouse>' }, function()
     local node = self._tree:get_node()
     if node == nil then

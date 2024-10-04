@@ -119,12 +119,10 @@ function DependenciesView:_create_dependencies_win()
     end
     self._dependency_usages_tree:render()
   end)
-
   ---Setup the filter
   self._dependencies_win:map('n', { '/', 's' }, function()
     self:_toggle_filter()
   end)
-
   self._dependencies_win:map('n', { '<c-s>' }, function()
     vim.api.nvim_set_current_win(self._dependency_usages_win.winid)
   end)
@@ -194,8 +192,7 @@ function DependenciesView:_create_dependency_usages_win()
     border = { text = { top = ' Dependency Usages ' } },
   })
   self._dependency_usages_win = Popup(dependency_usages_win_opts)
-  self:create_dependency_usages_tree()
-
+  self:_create_dependency_usages_tree()
   self._dependency_usages_win:map('n', '<enter>', function()
     local node = self._dependency_usages_tree:get_node()
     if node == nil then
@@ -211,14 +208,13 @@ function DependenciesView:_create_dependency_usages_win()
       self._dependency_usages_tree:render()
     end
   end)
-
   self._dependency_usages_win:map('n', { '<c-s>' }, function()
     vim.api.nvim_set_current_win(self._dependencies_win.winid)
   end)
 end
 
 ---@private Create the dependency usages tree
-function DependenciesView:create_dependency_usages_tree()
+function DependenciesView:_create_dependency_usages_tree()
   self._dependency_usages_tree = Tree({
     ns_id = GradleConfig.namespace,
     bufnr = self._dependency_usages_win.bufnr,
