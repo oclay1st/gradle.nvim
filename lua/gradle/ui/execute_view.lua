@@ -157,9 +157,7 @@ function ExecuteView:_create_input_component()
       for item in string.gmatch(value, '[^%s]+') do
         table.insert(args, item)
       end
-      Console.execute_command(GradleConfig.options.gradle_executable, args, true, function(state)
-        vim.schedule(function() end)
-      end)
+      Console.execute_command(GradleConfig.options.gradle_executable, args, true)
     end,
     on_change = function(query)
       self:_on_input_change(query)
@@ -186,7 +184,7 @@ function ExecuteView:_create_options_component()
   self:_create_options_tree_list()
   self._options_component:map('n', '<enter>', function()
     local current_node = self._options_tree:get_node()
-    if not current_node then
+    if not current_node or current_node.type == 'loading' then
       return
     end
     vim.schedule(function()
