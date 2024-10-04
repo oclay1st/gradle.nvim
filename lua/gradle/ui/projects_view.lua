@@ -88,7 +88,7 @@ function ProjectView:_load_command_node(node, project)
   end)
 end
 
----Execute the lifecycle goal node
+---Execute the task node
 ---@param node NuiTree.Node
 ---@param project Project
 function ProjectView:_load_task_node(node, project)

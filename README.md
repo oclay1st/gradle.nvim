@@ -19,7 +19,7 @@ This plugin is under **development** and has some known issues, so it is **not**
 - Execute tasks and custom commands
 - List dependencies and their relationship
 - Analyze dependencies usages, conflicts and duplications
-- Enqueue multiple goal executions
+- Enqueue multiple commands executions
 - Show the output of the commands executions
 
 ## ⚡️ Requirements

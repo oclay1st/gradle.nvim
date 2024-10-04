@@ -8,9 +8,9 @@ M.namespace = vim.api.nvim_create_namespace('gradle')
 ---@field size integer
 
 ---@class CustomCommand
----@field name string lifecycle name
+---@field name string
 ---@field description string
----@field cmd_args string[] the list of args
+---@field cmd_args string[]
 
 ---@class ConsoleView
 ---@field show_task_execution boolean
