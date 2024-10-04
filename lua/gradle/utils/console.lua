@@ -86,7 +86,8 @@ function M.execute_command(command, args, show_output, callback)
     on_start = function()
       if show_output then
         vim.schedule(function()
-          vim.api.nvim_buf_set_lines(_buf, 0, -1, false, {})
+          local message = 'Executing: ' .. command .. ' ' .. table.concat(args, ' ')
+          vim.api.nvim_buf_set_lines(_buf, 0, -1, false, { message })
         end)
       end
       if callback then

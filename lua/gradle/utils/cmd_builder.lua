@@ -39,4 +39,13 @@ CommandBuilder.build_gradle_dependencies_cmd = function(project_path)
   return CommandBuilder.build_gradle_cmd(project_path, { 'dependencies' })
 end
 
+---Build the  help cmd
+---@return Command
+CommandBuilder.build_gradle_help_cmd = function()
+  return {
+    cmd = GradleConfig.options.gradle_executable,
+    args = { '--help' },
+  }
+end
+
 return CommandBuilder
