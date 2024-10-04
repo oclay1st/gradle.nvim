@@ -3,6 +3,7 @@ local NuiLine = require('nui.line')
 local NuiSplit = require('nui.split')
 local DependenciesView = require('gradle.ui.dependencies_view')
 local HelpView = require('gradle.ui.help_view')
+local ExecuteView = require('gradle.ui.execute_view')
 local Sources = require('gradle.sources')
 local Utils = require('gradle.utils')
 local CommandBuilder = require('gradle.utils.cmd_builder')
@@ -10,12 +11,6 @@ local Console = require('gradle.utils.console')
 local GradleConfig = require('gradle.config')
 local highlights = require('gradle.highlights')
 local icons = require('gradle.ui.icons')
-
-local M = {}
-
-local _is_visible = false ---@type boolean
-
-local win
 
 local node_type_props = {
   command = {
@@ -45,11 +40,31 @@ local node_type_props = {
   project = { icon = icons.default.project },
 }
 
+---@class ProjectView
+---@field private _win NuiSplit
+---@field private _tree NuiTree
+---@field private _menu_header_line NuiLine
+---@field private _projects_header_line NuiLine
+---@field private _is_visible boolean
+---@field projects Project[]
+local ProjectView = {}
+
+ProjectView.__index = ProjectView
+
+---Create a new ProjectView
+---@param projects Project[]
+---@return ProjectView
+function ProjectView.new(projects)
+  return setmetatable({
+    projects = projects,
+  }, ProjectView)
+end
+
 ---Lookup for a project inside a list of projects and sub-projects (modules)
 ---@param id string
 ---@param projects Project[]
 ---@return Project
-local lookup_project = function(id, projects)
+local function lookup_project(id, projects)
   local project ---@type Project
   for _, item in ipairs(projects) do
     if item.id == id then
@@ -61,39 +76,36 @@ end
 
 ---Execute the command node
 ---@param node NuiTree.Node
----@param tree NuiTree
 ---@param project Project
-local load_command_node = function(node, tree, project)
+function ProjectView:_load_command_node(node, project)
   local command = CommandBuilder.build_gradle_cmd(project.root_path, node.cmd_args)
   local show_output = GradleConfig.options.console.show_command_execution
   Console.execute_command(command.cmd, command.args, show_output, function(state)
     vim.schedule(function()
       node.state = state
-      tree:render()
+      self._tree:render()
     end)
   end)
 end
 
 ---Execute the lifecycle goal node
 ---@param node NuiTree.Node
----@param tree NuiTree
 ---@param project Project
-local load_task_node = function(node, tree, project)
+function ProjectView:_load_task_node(node, project)
   local command = CommandBuilder.build_gradle_cmd(project.root_path, { node.cmd_arg })
   local show_output = GradleConfig.options.console.show_task_execution
   Console.execute_command(command.cmd, command.args, show_output, function(state)
     vim.schedule(function()
       node.state = state
-      tree:render()
+      self._tree:render()
     end)
   end)
 end
 
 ---Load the tasks nodes for the tree
 ---@param node NuiTree.Node
----@param tree NuiTree
 ---@param project Project
-local load_tasks_nodes = function(node, tree, project)
+function ProjectView:_load_tasks_nodes(node, project)
   Sources.load_project_tasks(project.root_path, function(state, tasks)
     vim.schedule(function()
       if Utils.SUCCEED_STATE == state then
@@ -122,21 +134,20 @@ local load_tasks_nodes = function(node, tree, project)
           table.insert(group_nodes, group_node)
         end
         node.is_loaded = true
-        tree:set_nodes(group_nodes, node._id)
+        self._tree:set_nodes(group_nodes, node._id)
         node:expand()
       end
       node.state = state
-      tree:render()
+      self._tree:render()
     end)
   end)
 end
 
 ---Load the dependency nodes for the tree
 ---@param node NuiTree.Node
----@param tree NuiTree
 ---@param project Project
 ---@param on_success? fun()
-local load_dependencies_nodes = function(node, tree, project, on_success)
+function ProjectView:_load_dependencies_nodes(node, project, on_success)
   Sources.load_project_dependencies(project.root_path, function(state, dependencies)
     vim.schedule(function()
       if Utils.SUCCEED_STATE == state then
@@ -148,7 +159,7 @@ local load_dependencies_nodes = function(node, tree, project, on_success)
             type = 'dependency_configuration',
             project_id = project.id,
           })
-          tree:add_node(configuration_node, node:get_id())
+          self._tree:add_node(configuration_node, node:get_id())
           for _, dependency in ipairs(group_item.dependencies) do
             local dependency_node = NuiTree.Node({
               id = dependency.id,
@@ -159,7 +170,7 @@ local load_dependencies_nodes = function(node, tree, project, on_success)
             })
             local _parent_id = dependency.parent_id and '-' .. dependency.parent_id
               or configuration_node:get_id()
-            tree:add_node(dependency_node, _parent_id)
+            self._tree:add_node(dependency_node, _parent_id)
           end
         end
         node.is_loaded = true
@@ -170,7 +181,7 @@ local load_dependencies_nodes = function(node, tree, project, on_success)
         end
       end
       node.state = state
-      tree:render()
+      self._tree:render()
     end)
   end)
 end
@@ -233,12 +244,11 @@ local create_project_node = function(project)
   }, project_nodes)
 end
 
----Create  the tree component
----@param bufnr number
-local create_tree = function(bufnr)
-  return NuiTree({
+---Create the tree component
+function ProjectView:_create_tree()
+  self._tree = NuiTree({
     ns_id = GradleConfig.namespace,
-    bufnr = bufnr,
+    bufnr = self._win.bufnr,
     prepare_node = function(node)
       local props = node_type_props[node.type]
       local line = NuiLine()
@@ -266,14 +276,27 @@ local create_tree = function(bufnr)
       return line
     end,
   })
+  local nodes = {}
+  for index, value in ipairs(self.projects) do
+    nodes[index] = create_project_node(value)
+  end
+  self._tree:set_nodes(nodes)
+  self._tree:render(3)
+  self._menu_header_line:highlight(self._win.bufnr, GradleConfig.namespace, 1)
+  self._projects_header_line:highlight(self._win.bufnr, GradleConfig.namespace, 2)
+  self._tree:render()
 end
 
----Create the header line
----@return NuiLine
-local create_header = function()
+---@private Create the header line
+function ProjectView:_create_menu_header_line()
   local line = NuiLine()
-  local separator = '  '
+  local separator = ' '
   line:append(' ' .. icons.default.gradle .. ' Gradle ' .. separator, highlights.SPECIAL_TEXT)
+  line:append(
+    icons.default.entry .. '' .. icons.default.command .. ' Execute',
+    highlights.SPECIAL_TEXT
+  )
+  line:append('<E>' .. separator, highlights.NORMAL_TEXT)
   line:append(
     icons.default.entry .. '' .. icons.default.tree .. ' Analyze Dependencies',
     highlights.SPECIAL_TEXT
@@ -281,54 +304,67 @@ local create_header = function()
   line:append('<D>' .. separator, highlights.NORMAL_TEXT)
   line:append(icons.default.entry .. '' .. icons.default.help .. ' Help', highlights.SPECIAL_TEXT)
   line:append('<?>' .. separator, highlights.NORMAL_TEXT)
-  return line
+  self._menu_header_line = line
+  self._menu_header_line:render(self._win.bufnr, GradleConfig.namespace, 1)
+end
+
+---@private Create the projects header line
+function ProjectView:_create_projects_header_line()
+  self._projects_header_line = NuiLine()
+  local project_text = ' Projects:'
+  if #self.projects == 0 then
+    project_text = project_text .. ' (create a new project) '
+  end
+  self._projects_header_line:append(project_text, highlights.DIM_TEXT)
+  self._projects_header_line:render(self._win.bufnr, GradleConfig.namespace, 2)
 end
 
 ---Setup key maps
----@param tree NuiTree
----@param projects Project[]
-local setup_win_maps = function(tree, projects)
-  win:map('n', { '<esc>', 'q' }, function()
-    M.hide()
+function ProjectView:_setup_win_maps()
+  self._win:map('n', { '<esc>', 'q' }, function()
+    self:hide()
   end)
-
-  win:map('n', 'D', function()
-    local node = tree:get_node()
+  self._win:map('n', 'E', function()
+    local execute_view = ExecuteView.new()
+    execute_view:mount()
+  end)
+  self._win:map('n', 'D', function()
+    local node = self._tree:get_node()
     if node == nil then
       vim.notify('Not project selected')
       return
     end
-    local project = lookup_project(node.project_id, projects)
-    local dependencies_node = tree:get_node('-' .. project.id .. '-dependencies')
+    local project = lookup_project(node.project_id, self.projects)
+    local dependencies_node = self._tree:get_node('-' .. project.id .. '-dependencies')
     assert(dependencies_node, "Dependencies node doesn't exist on project: " .. project.root_path)
     if dependencies_node.is_loaded then
-      DependenciesView.mount(project.name, project.dependencies)
+      local dependency_view = DependenciesView.new(project.name, project.dependencies)
+      dependency_view:mount()
     else
-      load_dependencies_nodes(dependencies_node, tree, project, function()
-        DependenciesView.mount(project.name, project.dependencies)
+      self:_load_dependencies_nodes(dependencies_node, project, function()
+        local dependency_view = DependenciesView.new(project.name, project.dependencies)
+        dependency_view:mount()
       end)
     end
   end, { noremap = true, nowait = true })
-
-  win:map('n', '?', function()
+  self._win:map('n', '?', function()
     HelpView.mount()
   end)
-
-  win:map('n', '<enter>', function()
-    local node = tree:get_node()
+  self._win:map('n', { '<enter>', '<2-LeftMouse>' }, function()
+    local node = self._tree:get_node()
     if node == nil then
       return
     end
     local updated = false
-    local project = lookup_project(node.project_id, projects)
+    local project = lookup_project(node.project_id, self.projects)
     if node.type == 'command' then
-      load_command_node(node, tree, project)
+      self:_load_command_node(node, project)
     elseif node.type == 'task' then
-      load_task_node(node, tree, project)
+      self:_load_task_node(node, project)
     elseif node.type == 'tasks' and not node.is_loaded then
-      load_tasks_nodes(node, tree, project)
+      self:_load_tasks_nodes(node, project)
     elseif node.type == 'dependencies' and not node.is_loaded then
-      load_dependencies_nodes(node, tree, project)
+      self:_load_dependencies_nodes(node, project)
     end
     if node:is_expanded() then
       updated = node:collapse() or updated
@@ -336,15 +372,14 @@ local setup_win_maps = function(tree, projects)
       updated = node:expand() or updated
     end
     if updated then
-      tree:render()
+      self._tree:render()
     end
   end, { noremap = true, nowait = true })
 end
 
----Mount the explorer component
----@param projects Project[]
-M.mount = function(projects)
-  win = NuiSplit({
+---@private Create win component
+function ProjectView:_create_win()
+  self._win = NuiSplit({
     ns_id = GradleConfig.namespace,
     relative = 'editor',
     position = GradleConfig.options.projects_view.position,
@@ -364,58 +399,40 @@ M.mount = function(projects)
       list = false,
     },
   })
+end
 
+---Mount the explorer component
+function ProjectView:mount()
   ---Mount the component
-  win:mount()
-  _is_visible = true
-
+  self:_create_win()
+  self._win:mount()
+  self._is_visible = true
   ---Create the header  line
-  local header_line = create_header()
-  header_line:render(win.bufnr, GradleConfig.namespace, 1)
-
+  self:_create_menu_header_line()
   ---Create the Projects line
-  local project_line = NuiLine()
-  local project_text = ' Projects:'
-  if #projects == 0 then
-    project_text = project_text .. ' (create a new project) '
-  end
-  project_line:append(project_text, highlights.DIM_TEXT)
-  project_line:render(win.bufnr, GradleConfig.namespace, 2)
-
+  self:_create_projects_header_line()
   ---Create the tree
-  local tree = create_tree(win.bufnr)
-  local nodes = {}
-  for index, value in ipairs(projects) do
-    nodes[index] = create_project_node(value)
-  end
-  tree:set_nodes(nodes)
-
+  self:_create_tree()
   ---Setup maps
-  setup_win_maps(tree, projects)
-
-  ---Render the tree
-  tree:render(3)
-  header_line:highlight(win.bufnr, GradleConfig.namespace, 1)
-  project_line:highlight(win.bufnr, GradleConfig.namespace, 2)
-  tree:render()
+  self:_setup_win_maps()
 end
 
-M.hide = function()
-  win:hide()
-  _is_visible = false
+function ProjectView:hide()
+  self._win:hide()
+  self._is_visible = false
 end
 
-M.show = function()
-  win:show()
-  _is_visible = true
+function ProjectView:show()
+  self._win:show()
+  self._is_visible = true
 end
 
-M.toggle = function()
-  if _is_visible then
-    M.hide()
+function ProjectView:toggle()
+  if self._is_visible then
+    self:hide()
   else
-    M.show()
+    self:show()
   end
 end
 
-return M
+return ProjectView

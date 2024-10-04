@@ -5,6 +5,7 @@ local Path = require('plenary.path')
 local SettingsParser = require('gradle.parsers.settings_gradle_parser')
 local TasksParser = require('gradle.parsers.tasks_parser')
 local DependencyTreeParser = require('gradle.parsers.dependency_tree_parser')
+local HelpOptionsParser = require('gradle.parsers.help_options_parser')
 local CommandBuilder = require('gradle.utils.cmd_builder')
 local Utils = require('gradle.utils')
 local console = require('gradle.utils.console')
@@ -86,6 +87,19 @@ M.load_project_dependencies = function(project_path, callback)
   local command = CommandBuilder.build_gradle_dependencies_cmd(project_path)
   local show_output = GradleConfig.options.console.show_dependencies_load_execution
   console.execute_command(command.cmd, command.args, show_output, _callback)
+end
+
+M.load_help_options = function(callback)
+  local _callback = function(state, job)
+    local help_options
+    if Utils.SUCCEED_STATE == state then
+      local output_lines = job:result()
+      help_options = HelpOptionsParser.parse(output_lines)
+    end
+    callback(state, help_options)
+  end
+  local command = CommandBuilder.build_gradle_help_cmd()
+  console.execute_command(command.cmd, command.args, false, _callback)
 end
 
 return M

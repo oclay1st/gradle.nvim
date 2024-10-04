@@ -5,7 +5,7 @@ local ProjectView = require('gradle.ui.projects_view')
 
 local M = {}
 
-local is_mounted = false
+local project_view
 
 ---Setup the plugin
 M.setup = function(opts)
@@ -14,13 +14,13 @@ M.setup = function(opts)
 end
 
 M.toggle = function()
-  if not is_mounted then
+  if not project_view then
     local workspace_path = vim.fn.getcwd()
     local projects = Sources.scan_projects(workspace_path)
-    ProjectView.mount(projects)
-    is_mounted = true
+    project_view = ProjectView.new(projects)
+    project_view:mount()
   else
-    ProjectView.toggle()
+    project_view:toggle()
   end
 end
 
