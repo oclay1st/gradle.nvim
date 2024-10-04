@@ -5,7 +5,7 @@
   </a>
 </div>
 
-**gradle.nvim** is a Gradle plugin for Neovim.
+**gradle.nvim** is a plugin to use Gradle (Java) in Neovim.
 
 <div>
   <img src ="assets/screenshot.png">

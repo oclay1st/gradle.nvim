@@ -6,6 +6,7 @@ local GradleConfig = require('gradle.config')
 local M = {}
 
 local help_keys = {
+  { key = 'E', desc = 'Execute gradle command' },
   { key = 'D', desc = '[Projects] analyze dependencies' },
   { key = '/, s', desc = '[Dependencies] search' },
   { key = '<Ctrl>s', desc = '[Dependencies] switch window' },
