@@ -1,6 +1,6 @@
-local NuiTree = require('nui.tree')
-local NuiLine = require('nui.line')
-local NuiText = require('nui.text')
+local Tree = require('nui.tree')
+local Line = require('nui.line')
+local Text = require('nui.text')
 local Popup = require('nui.popup')
 local Input = require('nui.input')
 local Layout = require('nui.layout')
@@ -9,13 +9,57 @@ local highlights = require('gradle.highlights')
 local GradleConfig = require('gradle.config')
 local icons = require('gradle.ui.icons')
 
-local M = {}
+---@class DependenciesView
+---@field private _dependencies_win NuiPopup
+---@field private _dependencies_tree NuiTree
+---@field private _dependency_usages_win NuiPopup
+---@field private _dependency_usages_tree NuiTree
+---@field private _dependency_filter NuiInput
+---@field private _layout NuiLayout
+---@field private _default_opts table
+---@field private _prev_win number
+---@field private _is_filter_visible boolean
+---@field dependencies Project.Dependency[]
+---@field project_name string
+local DependenciesView = {}
+
+DependenciesView.__index = DependenciesView
+
+function DependenciesView.new(project_name, dependencies)
+  return setmetatable({
+    project_name = project_name,
+    dependencies = dependencies,
+    _default_opts = {
+      ns_id = GradleConfig.namespace,
+      buf_options = {
+        buftype = 'nofile',
+        swapfile = false,
+        filetype = 'gradle',
+        undolevels = -1,
+      },
+      win_options = {
+        cursorline = true,
+        colorcolumn = '',
+        signcolumn = 'no',
+        number = false,
+        relativenumber = false,
+        spell = false,
+        list = false,
+      },
+      border = {
+        style = 'rounded',
+      },
+    },
+    _prev_win = vim.api.nvim_get_current_win(),
+    _is_filter_visible = false,
+  }, DependenciesView)
+end
 
 ---Create dependency node
 ---@param dependency Project.Dependency
 ---@return NuiTree.Node
 local function create_tree_node(dependency)
-  return NuiTree.Node({
+  return Tree.Node({
     id = dependency.id,
     text = dependency.name .. ':' .. dependency.version,
     name = dependency.group .. ':' .. dependency.name,
@@ -26,11 +70,102 @@ local function create_tree_node(dependency)
   })
 end
 
----Create the node list of dependencies
----@param dependencies Project.Dependency[]
-local function create_dependencies_list_nodes(dependencies)
+---Filter the related dependencies by name
+---@param name string
+---@param indexed_dependencies any
+local function filter_dependencies(name, indexed_dependencies)
+  local filtered_dependencies = {}
+  local filtered = {}
+  for _, dependency in pairs(indexed_dependencies) do
+    if name == dependency.group .. ':' .. dependency.name then
+      local pos_to_insert = #filtered_dependencies + 1
+      local id = dependency.id
+      while id ~= nil and filtered[id] == nil do
+        filtered[id] = 1
+        table.insert(filtered_dependencies, pos_to_insert, indexed_dependencies[id])
+        id = indexed_dependencies[id].parent_id
+      end
+    end
+  end
+  return filtered_dependencies
+end
+
+---@private Create dependencies window
+function DependenciesView:_create_dependencies_win()
+  local dependencies_win_opts = vim.tbl_deep_extend('force', self._default_opts, {
+    enter = true,
+    border = { text = { top = ' Resolved Dependencies (' .. self.project_name .. ') ' } },
+  })
+  self._dependencies_win = Popup(dependencies_win_opts)
+  self:_create_dependencies_tree()
+  local indexed_dependencies = {}
+  for _, item in ipairs(self.dependencies) do
+    indexed_dependencies[item.id] = item
+  end
+  self._dependencies_win:on(event.CursorMoved, function()
+    local current_node = self._dependencies_tree:get_node()
+    if current_node == nil then
+      return
+    end
+    local filtered_dependencies = filter_dependencies(current_node.name, indexed_dependencies)
+    self._dependency_usages_tree:set_nodes({})
+    for _, dependency in pairs(filtered_dependencies) do
+      local parent_id = dependency.parent_id and '-' .. dependency.parent_id or nil
+      local node = create_tree_node(dependency)
+      self._dependency_usages_tree:add_node(node, parent_id)
+      if parent_id then
+        self._dependency_usages_tree:get_node(parent_id):expand()
+      end
+    end
+    self._dependency_usages_tree:render()
+  end)
+
+  ---Setup the filter
+  self._dependencies_win:map('n', { '/', 's' }, function()
+    self:_toggle_filter()
+  end)
+
+  self._dependencies_win:map('n', { '<c-s>' }, function()
+    vim.api.nvim_set_current_win(self._dependency_usages_win.winid)
+  end)
+end
+
+---@private Toggle filter
+function DependenciesView:_toggle_filter()
+  if self._is_filter_visible then
+    self._dependency_filter:hide()
+    self._is_filter_visible = false
+  else
+    self._dependency_filter:show()
+    self._is_filter_visible = true
+  end
+end
+
+---@private Create the dependencies tree
+function DependenciesView:_create_dependencies_tree()
+  self._dependencies_tree = Tree({
+    ns_id = GradleConfig.namespace,
+    bufnr = self._dependencies_win.bufnr,
+    prepare_node = function(node)
+      local line = Line()
+      line:append(' ')
+      local icon = node.has_conflict and icons.default.warning or icons.default.package
+      local icon_highlight = node.has_conflict and 'DiagnosticWarn' or 'SpecialChar'
+      line:append(icon .. ' ', icon_highlight)
+      line:append(node.text)
+      if node.configuration then
+        line:append(' (' .. node.configuration .. ')', highlights.DIM_TEXT)
+      end
+      return line
+    end,
+  })
+  self:_create_dependencies_tree_nodes()
+end
+
+---@private Create the node list of dependencies
+function DependenciesView:_create_dependencies_tree_nodes()
   local nodes_indexes = {}
-  for _, dependency in ipairs(dependencies) do
+  for _, dependency in ipairs(self.dependencies) do
     local name = dependency.group .. ':' .. dependency.name
     if nodes_indexes[name] == nil then
       local node = create_tree_node(dependency)
@@ -49,34 +184,46 @@ local function create_dependencies_list_nodes(dependencies)
   table.sort(nodes, function(a, b)
     return string.lower(a.text) < string.lower(b.text)
   end)
-  return nodes
+  self._dependencies_tree:set_nodes(nodes)
+  self._dependencies_tree:render()
 end
 
-local function create_dependencies_tree(bufnr)
-  return NuiTree({
-    ns_id = GradleConfig.namespace,
-    bufnr = bufnr,
-    prepare_node = function(node)
-      local line = NuiLine()
-      line:append(' ')
-      local icon = node.has_conflict and icons.default.warning or icons.default.package
-      local icon_highlight = node.has_conflict and 'DiagnosticWarn' or 'SpecialChar'
-      line:append(icon .. ' ', icon_highlight)
-      line:append(node.text)
-      if node.configuration then
-        line:append(' (' .. node.configuration .. ')', highlights.DIM_TEXT)
-      end
-      return line
-    end,
+---@private Create dependency usages window
+function DependenciesView:_create_dependency_usages_win()
+  local dependency_usages_win_opts = vim.tbl_deep_extend('force', self._default_opts, {
+    border = { text = { top = ' Dependency Usages ' } },
   })
+  self._dependency_usages_win = Popup(dependency_usages_win_opts)
+  self:create_dependency_usages_tree()
+
+  self._dependency_usages_win:map('n', '<enter>', function()
+    local node = self._dependency_usages_tree:get_node()
+    if node == nil then
+      return
+    end
+    local updated = false
+    if node:is_expanded() then
+      updated = node:collapse() or updated
+    else
+      updated = node:expand() or updated
+    end
+    if updated then
+      self._dependency_usages_tree:render()
+    end
+  end)
+
+  self._dependency_usages_win:map('n', { '<c-s>' }, function()
+    vim.api.nvim_set_current_win(self._dependencies_win.winid)
+  end)
 end
 
-local function create_dependency_usages_tree(bufnr)
-  return NuiTree({
+---@private Create the dependency usages tree
+function DependenciesView:create_dependency_usages_tree()
+  self._dependency_usages_tree = Tree({
     ns_id = GradleConfig.namespace,
-    bufnr = bufnr,
+    bufnr = self._dependency_usages_win.bufnr,
     prepare_node = function(node)
-      local line = NuiLine()
+      local line = Line()
       line:append(' ' .. string.rep('  ', node:get_depth() - 1))
       if node:has_children() then
         line:append(node:is_expanded() and ' ' or ' ', 'SpecialChar')
@@ -106,31 +253,29 @@ local function create_dependency_usages_tree(bufnr)
   })
 end
 
----Filter the related dependencies by name
----@param name string
----@param indexed_dependencies table
-local function filter_dependencies(name, indexed_dependencies)
-  local filtered_dependencies = {}
-  local filtered = {}
-  for _, dependency in pairs(indexed_dependencies) do
-    if name == dependency.group .. ':' .. dependency.name then
-      local pos_to_insert = #filtered_dependencies + 1
-      local id = dependency.id
-      while id ~= nil and filtered[id] == nil do
-        filtered[id] = 1
-        table.insert(filtered_dependencies, pos_to_insert, indexed_dependencies[id])
-        id = indexed_dependencies[id].parent_id
+---@private React on filter change
+function DependenciesView:_on_filter_change(search, dependencies_nodes)
+  vim.schedule(function()
+    local nodes = {}
+    local _search = string.gsub(search, '%W', '%%%1') -- scape special characters
+    for _, node in ipairs(dependencies_nodes) do
+      if string.find(node.name, _search) then
+        table.insert(nodes, node)
       end
     end
-  end
-  return filtered_dependencies
+    self._dependencies_tree:set_nodes(nodes)
+    self._dependencies_tree:render()
+    vim.api.nvim_win_set_cursor(self._dependencies_win.winid, { 1, 0 })
+  end)
 end
 
-local function create_dependency_filter(wind_id, on_change)
-  local win_height = vim.api.nvim_win_get_height(wind_id)
+---@private Create the dependency filter component
+function DependenciesView:_create_dependency_filter()
+  local win_height = vim.api.nvim_win_get_height(self._dependencies_win.winid)
   local relative_row = win_height - 1
-  local win_width = vim.api.nvim_win_get_width(wind_id)
-  local input = Input({
+  local win_width = vim.api.nvim_win_get_width(self._dependencies_win.winid)
+  local dependencies_nodes = self._dependencies_tree:get_nodes()
+  self._dependency_filter = Input({
     ns_id = GradleConfig.namespace,
     relative = 'win',
     position = {
@@ -149,27 +294,24 @@ local function create_dependency_filter(wind_id, on_change)
       },
     },
   }, {
-    prompt = NuiText(icons.default.search .. '  ', 'SpecialChar'),
-    on_change = on_change,
+    prompt = Text(icons.default.search .. '  ', 'SpecialChar'),
+    on_change = function(value)
+      self:_on_filter_change(value, dependencies_nodes)
+    end,
   })
 
-  input:on(event.BufLeave, function()
-    input:unmount()
+  self._dependency_filter:on(event.BufLeave, function()
+    self._dependency_filter:hide()
   end)
 
-  input:map('n', { '<esc>', 'q' }, function()
-    input:unmount()
+  self._dependency_filter:map('n', { '<esc>', 'q' }, function()
+    self._dependency_filter:hide()
   end)
-
-  return input
 end
 
----Create the component layout
----@param left_win NuiPopup
----@param right_win NuiPopup
-local function create_layout(left_win, right_win)
-  local prev_win = vim.api.nvim_get_current_win()
-  local layout = Layout(
+---@private Create the component layout
+function DependenciesView:_create_layout()
+  self._layout = Layout(
     {
       ns_id = GradleConfig.namespace,
       relative = 'editor',
@@ -180,131 +322,42 @@ local function create_layout(left_win, right_win)
       },
     },
     Layout.Box({
-      Layout.Box(left_win, { size = '50%' }),
-      Layout.Box(right_win, { size = '50%' }),
+      Layout.Box(self._dependencies_win, { size = '50%' }),
+      Layout.Box(self._dependency_usages_win, { size = '50%' }),
     }, { dir = 'row' })
   )
-
-  for _, win in pairs({ left_win, right_win }) do
+  local wins = { self._dependencies_win, self._dependency_usages_win }
+  for _, win in pairs(wins) do
     win:on(event.BufLeave, function()
       vim.schedule(function()
         local current_buf = vim.api.nvim_get_current_buf()
-        for _, w in pairs({ left_win, right_win }) do
+        for _, w in pairs(wins) do
           if w.bufnr == current_buf then
             return
           end
         end
-        layout:unmount()
-        vim.api.nvim_set_current_win(prev_win)
+        self._layout:unmount()
+        vim.api.nvim_set_current_win(self._prev_win)
       end)
     end)
     win:map('n', { '<esc>', 'q' }, function()
-      layout:unmount()
-      vim.api.nvim_set_current_win(prev_win)
+      self._layout:unmount()
+      vim.api.nvim_set_current_win(self._prev_win)
     end)
   end
-  return layout
 end
 
 ---Mount component
----@param project_name string
----@param dependencies Project.Dependency[]
-M.mount = function(project_name, dependencies)
-  local default_win_opts = {
-    ns_id = GradleConfig.namespace,
-    win_options = {
-      cursorline = true,
-      scrolloff = 1,
-      sidescrolloff = 1,
-      cursorcolumn = false,
-      colorcolumn = '',
-      spell = false,
-      list = false,
-      wrap = false,
-    },
-    border = {
-      style = 'rounded',
-    },
-  }
-  --- Setup the dependencies win
-  local dependencies_win_opts = vim.tbl_deep_extend('force', default_win_opts, {
-    enter = true,
-    border = { text = { top = ' Resolved Dependencies (' .. project_name .. ') ' } },
-  })
-  local dependencies_win = Popup(dependencies_win_opts)
-  local dependencies_tree = create_dependencies_tree(dependencies_win.bufnr)
-  local dependencies_nodes = create_dependencies_list_nodes(dependencies)
-  dependencies_tree:set_nodes(dependencies_nodes)
-  dependencies_tree:render()
-
-  --- Setup the dependency usages win
-  local dependency_usages_win_opts = vim.tbl_deep_extend('force', default_win_opts, {
-    border = { text = { top = ' Dependency Usages ' } },
-  })
-  local dependency_usages_win = Popup(dependency_usages_win_opts)
-  local dependency_usages_tree = create_dependency_usages_tree(dependency_usages_win.bufnr)
-  local indexed_dependencies = {}
-  for _, item in ipairs(dependencies) do
-    indexed_dependencies[item.id] = item
-  end
-
-  dependencies_win:on(event.CursorMoved, function()
-    local current_node = dependencies_tree:get_node()
-    if current_node == nil then
-      return
-    end
-    local filtered_dependencies = filter_dependencies(current_node.name, indexed_dependencies)
-    dependency_usages_tree:set_nodes({})
-    for _, dependency in pairs(filtered_dependencies) do
-      local parent_id = dependency.parent_id and '-' .. dependency.parent_id or nil
-      local node = create_tree_node(dependency)
-      dependency_usages_tree:add_node(node, parent_id)
-      if parent_id then
-        dependency_usages_tree:get_node(parent_id):expand()
-      end
-    end
-    dependency_usages_tree:render()
-  end)
-
-  dependency_usages_win:map('n', '<enter>', function()
-    local node = dependency_usages_tree:get_node()
-    if node == nil then
-      return
-    end
-    local updated = false
-    if node:is_expanded() then
-      updated = node:collapse() or updated
-    else
-      updated = node:expand() or updated
-    end
-    if updated then
-      dependency_usages_tree:render()
-    end
-  end)
-
+function DependenciesView:mount()
+  ---Setup the dependencies window
+  self:_create_dependencies_win()
+  ---Setup the dependency usages window
+  self:_create_dependency_usages_win()
   ---Setup the layout
-  local layout = create_layout(dependencies_win, dependency_usages_win)
-  layout:mount()
-  ---Setup the filter
-  dependencies_win:map('n', { '/', 's' }, function()
-    local filter = create_dependency_filter(dependencies_win.winid, function(search)
-      local nodes = vim.tbl_filter(function(node)
-        return string.find(node.name, search) and true or false
-      end, dependencies_nodes)
-      vim.schedule(function()
-        vim.api.nvim_win_set_cursor(dependencies_win.winid, { 1, 0 })
-        dependencies_tree:set_nodes(nodes)
-        dependencies_tree:render()
-      end)
-    end)
-    filter:mount()
-  end)
-  dependency_usages_win:map('n', { '<c-s>' }, function()
-    vim.api.nvim_set_current_win(dependencies_win.winid)
-  end)
-  dependencies_win:map('n', { '<c-s>' }, function()
-    vim.api.nvim_set_current_win(dependency_usages_win.winid)
-  end)
+  self:_create_layout()
+  self._layout:mount()
+  ---Setup the dependency filter
+  self:_create_dependency_filter()
 end
 
-return M
+return DependenciesView
