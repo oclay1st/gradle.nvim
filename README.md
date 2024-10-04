@@ -33,6 +33,7 @@ This plugin is under **development** and has some known issues, so it is **not**
 ```lua
 {
    "oclay1st/gradle.nvim",
+   cmd = 'Gradle',
    dependencies = {
       "nvim-lua/plenary.nvim",
       "MunifTanjim/nui.nvim",
