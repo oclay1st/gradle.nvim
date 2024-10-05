@@ -14,7 +14,7 @@ SettingGradleParser.parse_file = function(settings_gradle_path)
   local modules_names = {}
   with(open(settings_gradle_path), function(reader)
     local content = reader:read('*a')
-    project_name = string.match(content, "rootProject%.name = '(%w+)")
+    project_name = string.match(content, "rootProject%.name = '(.+)'")
     for match in string.gmatch(content, "include%('(%w+)'%)") do
       table.insert(modules_names, match)
     end
