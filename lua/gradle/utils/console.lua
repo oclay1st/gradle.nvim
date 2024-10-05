@@ -1,5 +1,6 @@
 local Job = require('plenary.job')
 local Utils = require('gradle.utils')
+local uv = vim.loop
 
 local M = {}
 
@@ -23,18 +24,34 @@ local append = function(line, buf, win)
   end)
 end
 
-local function create_buffer()
-  _win = vim.fn.win_getid(vim.fn.winnr('#'))
-  vim.api.nvim_set_current_win(_win)
-  vim.cmd('enew')
-  _buf = vim.api.nvim_get_current_buf()
-  if not pcall(vim.api.nvim_buf_set_name, _buf, _buf_name) then
-    vim.api.nvim_buf_set_name(_buf, _buf_name)
+local function setup_buffer()
+  if not _win or not vim.api.nvim_win_is_valid(_win) then
+    _win = vim.fn.win_getid(vim.fn.winnr('#'))
   end
+  vim.api.nvim_set_current_win(_win)
+  if _buf and not vim.api.nvim_buf_is_loaded(_buf) then
+    vim.api.nvim_buf_delete(_buf, { force = true, unload = false })
+  elseif _buf then
+    vim.api.nvim_set_current_buf(_buf)
+    return --nothing to do
+  end
+  _buf = vim.api.nvim_create_buf(true, false)
+  vim.api.nvim_buf_set_name(_buf, _buf_name)
   vim.api.nvim_set_option_value('buftype', 'nofile', { buf = _buf })
   vim.api.nvim_set_option_value('swapfile', false, { buf = _buf })
   vim.api.nvim_set_option_value('filetype', 'gradle_console', { buf = _buf })
   vim.api.nvim_set_option_value('undolevels', -1, { buf = _buf })
+  vim.api.nvim_set_current_buf(_buf)
+  vim.api.nvim_create_autocmd({ 'BufUnload' }, {
+    pattern = _buf_name,
+    callback = function()
+      for _, job in ipairs(_jobs) do
+        if job and job.pid then
+          uv.kill(job.pid, 9)
+        end
+      end
+    end,
+  })
 end
 
 local function enqueue_job(job, callback)
@@ -67,8 +84,8 @@ end
 ---@param show_output boolean
 ---@param callback? fun(state: string, ...)
 function M.execute_command(command, args, show_output, callback)
-  if show_output == true and not _buf then
-    create_buffer()
+  if show_output then
+    setup_buffer()
   end
   local job = Job:new({
     command = command,
