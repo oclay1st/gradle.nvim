@@ -16,9 +16,8 @@ local M = {}
 
 local create_custom_commands = function()
   local custom_commands = {}
-  for index, custom_command in ipairs(GradleConfig.options.custom_commands) do
-    custom_commands[index] =
-      Project.Command(custom_command.name, custom_command.description, custom_command.cmd_args)
+  for index, command in ipairs(GradleConfig.options.custom_commands) do
+    custom_commands[index] = Project.Command(command.name, command.description, command.cmd_args)
   end
   return custom_commands
 end
