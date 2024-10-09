@@ -37,6 +37,7 @@ local node_type_props = {
     pending_state_msg = ' ..pending ',
   },
   dependency_configuration = { icon = icons.default.tool_folder },
+  sub_projects = { icon = icons.default.tool_folder },
   project = { icon = icons.default.project },
 }
 
@@ -60,17 +61,22 @@ function ProjectView.new(projects)
   }, ProjectView)
 end
 
----Lookup for a project inside a list of projects and sub-projects (modules)
+---@private Lookup for a project inside a list of projects and sub-projects (modules)
 ---@param id string
----@param projects Project[]
 ---@return Project
-local function lookup_project(id, projects)
+function ProjectView:_lookup_project(id)
   local project ---@type Project
-  for _, item in ipairs(projects) do
-    if item.id == id then
-      project = item
+
+  ---@param projects Project
+  local function _lookup(projects)
+    for _, item in ipairs(projects) do
+      if item.id == id then
+        project = item
+      end
+      _lookup(item.sub_projects)
     end
   end
+  _lookup(self.projects)
   return assert(project, 'Project not found')
 end
 
@@ -186,10 +192,10 @@ function ProjectView:_load_dependencies_nodes(node, project, on_success)
   end)
 end
 
----Create a project node
+---@private Create a project node
 ---@param project Project
 ---@return NuiTree.Node
-local create_project_node = function(project)
+function ProjectView:_create_project_node(project)
   ---Map command nodes
   local command_nodes = {}
   for index, command in ipairs(project.commands) do
@@ -231,7 +237,28 @@ local create_project_node = function(project)
     project_id = project.id,
   })
 
-  local project_nodes = { tasks_node, dependencies_node }
+  local sub_projects_nodes = {}
+  for _, module in ipairs(project.sub_projects) do
+    local sub_project_node = self:_create_project_node(module)
+    table.insert(sub_projects_nodes, sub_project_node)
+  end
+
+  local sub_projects_node = NuiTree.Node({
+    text = 'Modules',
+    type = 'sub_projects',
+    project_id = project.id,
+  }, sub_projects_nodes)
+
+  local project_nodes = { tasks_node }
+
+  if #sub_projects_nodes > 0 then
+    table.insert(project_nodes, sub_projects_node)
+  end
+
+  if project.build_gradle_path then -- if not build gradle is probably a root project
+    table.insert(project_nodes, dependencies_node)
+  end
+
   if #command_nodes > 0 then
     table.insert(project_nodes, 1, commands_node)
   end
@@ -278,7 +305,7 @@ function ProjectView:_create_tree()
   })
   local nodes = {}
   for index, value in ipairs(self.projects) do
-    nodes[index] = create_project_node(value)
+    nodes[index] = self:_create_project_node(value)
   end
   self._tree:set_nodes(nodes)
   self._tree:render(3)
@@ -336,7 +363,7 @@ function ProjectView:_setup_win_maps()
       vim.notify('Not project selected')
       return
     end
-    local project = lookup_project(node.project_id, self.projects)
+    local project = self:_lookup_project(node.project_id)
     local dependencies_node = self._tree:get_node('-' .. project.id .. '-dependencies')
     assert(dependencies_node, "Dependencies node doesn't exist on project: " .. project.root_path)
     if dependencies_node.is_loaded then
@@ -360,7 +387,7 @@ function ProjectView:_setup_win_maps()
       return
     end
     local updated = false
-    local project = lookup_project(node.project_id, self.projects)
+    local project = self:_lookup_project(node.project_id)
     if node.type == 'command' then
       self:_load_command_node(node, project)
     elseif node.type == 'task' then

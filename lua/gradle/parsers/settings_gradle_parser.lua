@@ -8,22 +8,26 @@ local open = context_manager.open
 
 ---@class SettingGradleParser
 local SettingGradleParser = {}
-local project_name_pattern = "rootProject%.name%s*=%s*[%'" .. '%"' .. "](.+)[%'" .. '%"]'
+local project_name_pattern = "rootProject%.name%s*=%s*[%'" .. '%"' .. "](%w+)[%'" .. '%"]'
+local sub_project_pattern = "include%s*%(?[%'" .. '%"' .. "](.+)[%'" .. '%"]'
 
 SettingGradleParser.parse_file = function(settings_gradle_path)
   local project_name
-  local modules_names = {}
+  local sub_projects_names = {}
   with(open(settings_gradle_path), function(reader)
-    local content = reader:read('*a')
-    project_name = string.match(content, project_name_pattern)
-    for modules_match in string.gmatch(content, 'include%s*%((.*)%)') do
-      modules_match = string.gsub(modules_match, "[%'" .. '%"]', '')
-      for module_match in string.gmatch(modules_match, '[^%,]+') do
-        table.insert(modules_names, vim.trim(module_match))
+    for line in reader:lines() do
+      if not project_name then
+        project_name = string.match(line, project_name_pattern) or project_name
+      end
+      for sub_projects_match in string.gmatch(line, sub_project_pattern) do
+        sub_projects_match = string.gsub(sub_projects_match, "[%'" .. '%"%(%):]', '')
+        for sub_project_match in string.gmatch(sub_projects_match, '[^%,]+') do
+          table.insert(sub_projects_names, vim.trim(sub_project_match))
+        end
       end
     end
   end)
-  return { project_name = project_name, modules_names = modules_names }
+  return { project_name = project_name, sub_projects_names = sub_projects_names }
 end
 
 return SettingGradleParser

@@ -10,36 +10,68 @@ local CommandBuilder = require('gradle.utils.cmd_builder')
 local Utils = require('gradle.utils')
 local console = require('gradle.utils.console')
 
-local build_gradle_file_pattern = '.*build.gradle'
-
 local M = {}
 
+local build_gradle_file_pattern = '.*build.gradle'
+
+local settings_gradle_file_pattern = '.*settings.gradle'
+
+local scanned_path_list ---@type string[]
+
+local custom_commands ---@type string[]
+
 local create_custom_commands = function()
-  local custom_commands = {}
+  local _commands = {}
   for index, command in ipairs(GradleConfig.options.custom_commands) do
-    custom_commands[index] = Project.Command(command.name, command.description, command.cmd_args)
+    _commands[index] = Project.Command(command.name, command.description, command.cmd_args)
   end
-  return custom_commands
+  return _commands
 end
 
-local create_project_from_file = function(build_gradle_path)
+local function create_project_from_build_file(build_gradle_path)
   local build_gradle_file = Path:new(build_gradle_path)
   local build_gradle_parent = build_gradle_file:parent()
   local project_path = build_gradle_parent:absolute()
   local project_name = string.match(project_path, '%' .. Path.path.sep .. '(%w+)$')
-  local modules_names = {}
-  local settings_gradle = Path:new(build_gradle_parent, 'settings.gradle')
-  local settings_gradle_kts = Path:new(build_gradle_parent, 'settings.gradle.kts')
-  if settings_gradle:exists() then
-    local setting = SettingsParser.parse_file(settings_gradle:absolute())
-    project_name = setting.project_name
-    modules_names = setting.modules_names
-  elseif settings_gradle_kts:exists() then
-    local setting = SettingsParser.parse_file(settings_gradle_kts:absolute())
-    project_name = setting.project_name
-    modules_names = setting.modules_names
+  local project = Project.new(project_path, project_name, build_gradle_path)
+  project:set_commands(custom_commands)
+  return project
+end
+
+local function create_project_from_settings_file(settings_gradle_path)
+  local settings_gradle_file = Path:new(settings_gradle_path)
+  local settings_gradle_parent = settings_gradle_file:parent()
+  local project_path = settings_gradle_parent:absolute()
+  local setting = SettingsParser.parse_file(settings_gradle_file:absolute())
+  -- vim.print(setting)
+  local project = Project.new(project_path, setting.project_name, nil, settings_gradle_path)
+  project:set_commands(custom_commands)
+  for _, sub_project_name in ipairs(setting.sub_projects_names) do
+    local build_gradle_name = 'build.gradle'
+    if string.match(settings_gradle_path, '%.kts$') then
+      build_gradle_name = build_gradle_name .. '.kts'
+    end
+    local build_gradle = Path:new(project_path, sub_project_name, build_gradle_name) ---@type Path
+    local build_gradle_path = build_gradle:absolute()
+    if build_gradle:exists() and not vim.tbl_contains(scanned_path_list, build_gradle_path) then
+      local sub_project = create_project_from_build_file(build_gradle_path)
+      project:add_sub_project(sub_project)
+      table.insert(scanned_path_list, build_gradle_path)
+    end
   end
-  return Project.new(project_path, build_gradle_path, project_name)
+  return project
+end
+
+---Find project filter by settings file path or build file path
+---@param file_path string
+---@param projects Project[]
+---@return Project | nil
+local function find_project(file_path, projects)
+  for _, item in ipairs(projects) do
+    if item.build_gradle_path == file_path or item.settings_gradle_path == file_path then
+      return item
+    end
+  end
 end
 
 ---Load the gradle projects given a directory
@@ -47,14 +79,32 @@ end
 ---@return Project[]
 M.scan_projects = function(base_path)
   local projects = {}
-  local custom_commands = create_custom_commands()
+  scanned_path_list = {}
+  custom_commands = create_custom_commands()
   scan.scan_dir(base_path, {
-    search_pattern = build_gradle_file_pattern,
+    search_pattern = { build_gradle_file_pattern, settings_gradle_file_pattern },
     depth = 10,
-    on_insert = function(build_gradle_path, _)
-      local project = create_project_from_file(build_gradle_path)
-      project:set_commands(custom_commands)
-      table.insert(projects, project)
+    on_insert = function(gradle_file_path, _)
+      if not vim.tbl_contains(scanned_path_list, gradle_file_path) then
+        local project = find_project(gradle_file_path, projects)
+        if string.match(gradle_file_path, build_gradle_file_pattern) then
+          if not project then
+            project = create_project_from_build_file(gradle_file_path)
+            table.insert(projects, project)
+          end
+          project.build_gradle_path = gradle_file_path
+        else
+          if not project then
+            project = create_project_from_settings_file(gradle_file_path)
+            table.insert(projects, project)
+          elseif not project.settings_gradle_path then
+            local settings_project = create_project_from_settings_file(gradle_file_path)
+            project.name = settings_project.name
+          end
+          project.settings_gradle_path = gradle_file_path
+        end
+        table.insert(scanned_path_list, gradle_file_path)
+      end
     end,
   })
   return projects

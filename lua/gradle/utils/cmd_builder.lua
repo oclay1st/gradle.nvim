@@ -29,7 +29,7 @@ end
 ---@param project_path string
 ---@return Command
 CommandBuilder.build_gradle_tasks_cmd = function(project_path)
-  return CommandBuilder.build_gradle_cmd(project_path, { 'tasks', '--all' })
+  return CommandBuilder.build_gradle_cmd(project_path, { ':tasks' })
 end
 
 ---Build the dependency tree cmd

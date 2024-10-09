@@ -3,31 +3,46 @@ local Utils = require('gradle.utils')
 ---@class Project
 ---@field id string
 ---@field build_gradle_path string
+---@field settings_gradle_path string
 ---@field root_path string
 ---@field name string
 ---@field tasks Project.Task[]
 ---@field dependencies Project.Dependency[]
 ---@field commands Project.Command[]
+---@field sub_projects Project[]
 local Project = {}
 Project.__index = Project
 
 ---Create a new instance of a Project
 ---@param root_path string
----@param build_gradle_path string
 ---@param name string
+---@param build_gradle_path? string
+---@param settings_gradle_path? string
 ---@param tasks? Project.Task[]
 ---@param dependencies? Project.Dependency[]
 ---@param commands? Project.Command[]
+---@param sub_projects? Project.Command[]
 ---@return Project
-function Project.new(root_path, build_gradle_path, name, tasks, dependencies, commands)
+function Project.new(
+  root_path,
+  name,
+  build_gradle_path,
+  settings_gradle_path,
+  tasks,
+  dependencies,
+  commands,
+  sub_projects
+)
   return setmetatable({
     id = Utils.uuid(),
     root_path = root_path,
-    build_gradle_path = build_gradle_path,
     name = name,
+    build_gradle_path = build_gradle_path,
+    settings_gradle_path = settings_gradle_path,
     tasks = tasks or {},
     dependencies = dependencies or {},
     commands = commands or {},
+    sub_projects = sub_projects or {},
   }, Project)
 end
 
@@ -47,6 +62,12 @@ end
 ---@param commands Project.Command[]
 function Project:set_commands(commands)
   self.commands = commands
+end
+
+---Add sub project
+---@param project Project
+function Project:add_sub_project(project)
+  table.insert(self.sub_projects, project)
 end
 
 ---@class Project.Command
