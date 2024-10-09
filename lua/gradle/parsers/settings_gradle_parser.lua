@@ -8,7 +8,7 @@ local open = context_manager.open
 
 ---@class SettingGradleParser
 local SettingGradleParser = {}
-local project_name_pattern = "rootProject%.name%s*=%s*[%'" .. '%"' .. "](%w+)[%'" .. '%"]'
+local project_name_pattern = "rootProject%.name%s*=%s*[%'" .. '%"' .. "](.-)[%'" .. '%"]'
 local sub_project_pattern = "include%s*%(?[%'" .. '%"' .. "](.+)[%'" .. '%"]'
 
 SettingGradleParser.parse_file = function(settings_gradle_path)

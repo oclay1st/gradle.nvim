@@ -32,7 +32,8 @@ local function create_project_from_build_file(build_gradle_path)
   local build_gradle_file = Path:new(build_gradle_path)
   local build_gradle_parent = build_gradle_file:parent()
   local project_path = build_gradle_parent:absolute()
-  local project_name = string.match(project_path, '%' .. Path.path.sep .. '(%w+)$')
+  local path_parts = Utils.split_path(project_path)
+  local project_name = path_parts[#path_parts]
   local project = Project.new(project_path, project_name, build_gradle_path)
   project:set_commands(custom_commands)
   return project
@@ -43,7 +44,6 @@ local function create_project_from_settings_file(settings_gradle_path)
   local settings_gradle_parent = settings_gradle_file:parent()
   local project_path = settings_gradle_parent:absolute()
   local setting = SettingsParser.parse_file(settings_gradle_file:absolute())
-  -- vim.print(setting)
   local project = Project.new(project_path, setting.project_name, nil, settings_gradle_path)
   project:set_commands(custom_commands)
   for _, sub_project_name in ipairs(setting.sub_projects_names) do
@@ -67,8 +67,9 @@ end
 ---@param projects Project[]
 ---@return Project | nil
 local function find_project(file_path, projects)
+  local _root_path = Path:new(file_path):parent():absolute()
   for _, item in ipairs(projects) do
-    if item.build_gradle_path == file_path or item.settings_gradle_path == file_path then
+    if item.root_path == _root_path then
       return item
     end
   end
@@ -84,7 +85,7 @@ M.scan_projects = function(base_path)
   scan.scan_dir(base_path, {
     search_pattern = { build_gradle_file_pattern, settings_gradle_file_pattern },
     depth = 10,
-    on_insert = function(gradle_file_path, _)
+    on_insert = function(gradle_file_path)
       if not vim.tbl_contains(scanned_path_list, gradle_file_path) then
         local project = find_project(gradle_file_path, projects)
         if string.match(gradle_file_path, build_gradle_file_pattern) then
