@@ -48,4 +48,32 @@ CommandBuilder.build_gradle_help_cmd = function()
   }
 end
 
+---Build the init project cmd
+---@return Command
+CommandBuilder.create_project = function(
+  name,
+  package,
+  java_version,
+  dsl,
+  test_framework,
+  directory
+)
+  return {
+    cmd = GradleConfig.options.gradle_executable,
+    args = {
+      '-p',
+      directory,
+      'init',
+      '--type=java-application',
+      '--project-name=' .. name,
+      '--package=' .. package,
+      '--java-version=' .. java_version,
+      '--dsl=' .. dsl,
+      '--test-framework=' .. test_framework,
+      '--no-incubating',
+      '--no-split-project',
+      '--no-comments',
+    },
+  }
+end
 return CommandBuilder

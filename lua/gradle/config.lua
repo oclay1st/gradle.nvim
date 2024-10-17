@@ -1,3 +1,4 @@
+local Path = require('plenary.path')
 ---@class GradleConfig
 local M = {}
 
@@ -17,12 +18,18 @@ M.namespace = vim.api.nvim_create_namespace('gradle')
 ---@field show_command_execution boolean
 ---@field show_dependencies_load_execution boolean
 ---@field show_tasks_load_execution boolean
+---@field show_create_project_execution boolean
+
+---@class Workspace
+---@field name string
+---@field path string
 
 ---@class GradleOptions
 ---@field projects_view? ProjectsView
 ---@field console ConsoleView
 ---@field gradle_executable string the name or path of mvn
 ---@field custom_commands CustomCommand[]
+---@field workspaces Workspace[]
 local defaultOptions = {
   projects_view = {
     position = 'right',
@@ -33,9 +40,14 @@ local defaultOptions = {
     show_task_execution = true,
     show_dependencies_load_execution = false,
     show_tasks_load_execution = false,
+    show_create_project_execution = false,
   },
   gradle_executable = 'gradle',
   custom_commands = {},
+  workspaces = {
+    { name = 'HOME', path = vim.loop.os_homedir() },
+    { name = 'CURRENT_DIR', path = vim.fn.getcwd() },
+  },
 }
 
 ---@type GradleOptions

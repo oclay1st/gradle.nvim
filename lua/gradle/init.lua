@@ -5,7 +5,7 @@ local ProjectView = require('gradle.ui.projects_view')
 
 local M = {}
 
-local projects_view
+local projects_view -- @type ProjectView
 
 ---Setup the plugin
 M.setup = function(opts)
@@ -13,15 +13,24 @@ M.setup = function(opts)
   highlights.setup()
 end
 
+local function load_projects_view()
+  local workspace_path = vim.fn.getcwd()
+  local projects = Sources.scan_projects(workspace_path)
+  projects_view = ProjectView.new(projects)
+  projects_view:mount()
+end
+
 M.toggle = function()
   if not projects_view then
-    local workspace_path = vim.fn.getcwd()
-    local projects = Sources.scan_projects(workspace_path)
-    projects_view = ProjectView.new(projects)
-    projects_view:mount()
+    load_projects_view()
   else
     projects_view:toggle()
   end
+end
+
+M.refresh = function()
+  projects_view:unmount()
+  load_projects_view()
 end
 
 return M
