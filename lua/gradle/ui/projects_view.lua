@@ -4,6 +4,7 @@ local NuiSplit = require('nui.split')
 local DependenciesView = require('gradle.ui.dependencies_view')
 local HelpView = require('gradle.ui.help_view')
 local ExecuteView = require('gradle.ui.execute_view')
+local InitializerView = require('gradle.ui.initializer_view')
 local Sources = require('gradle.sources')
 local Utils = require('gradle.utils')
 local CommandBuilder = require('gradle.utils.cmd_builder')
@@ -320,15 +321,20 @@ function ProjectView:_create_menu_header_line()
   local separator = ' '
   line:append(' ' .. icons.default.gradle .. ' Gradle ' .. separator, highlights.SPECIAL_TEXT)
   line:append(
+    icons.default.entry .. '' .. icons.default.command .. ' Create',
+    highlights.SPECIAL_TEXT
+  )
+  line:append('<c>' .. separator, highlights.NORMAL_TEXT)
+  line:append(
+    icons.default.entry .. '' .. icons.default.tree .. ' Analyze',
+    highlights.SPECIAL_TEXT
+  )
+  line:append('<a>' .. separator, highlights.NORMAL_TEXT)
+  line:append(
     icons.default.entry .. '' .. icons.default.command .. ' Execute',
     highlights.SPECIAL_TEXT
   )
-  line:append('<E>' .. separator, highlights.NORMAL_TEXT)
-  line:append(
-    icons.default.entry .. '' .. icons.default.tree .. ' Analyze Dependencies',
-    highlights.SPECIAL_TEXT
-  )
-  line:append('<D>' .. separator, highlights.NORMAL_TEXT)
+  line:append('<e>' .. separator, highlights.NORMAL_TEXT)
   line:append(icons.default.entry .. '' .. icons.default.help .. ' Help', highlights.SPECIAL_TEXT)
   line:append('<?>' .. separator, highlights.NORMAL_TEXT)
   self._menu_header_line = line
@@ -352,12 +358,17 @@ function ProjectView:_setup_win_maps()
     self:hide()
   end)
 
-  self._win:map('n', 'E', function()
+  self._win:map('n', 'c', function()
+    local initializer_view = InitializerView.new()
+    initializer_view:mount()
+  end)
+
+  self._win:map('n', 'e', function()
     local execute_view = ExecuteView.new()
     execute_view:mount()
   end)
 
-  self._win:map('n', 'D', function()
+  self._win:map('n', 'a', function()
     local node = self._tree:get_node()
     if node == nil then
       vim.notify('Not project selected')
@@ -430,14 +441,14 @@ function ProjectView:_create_win()
       list = false,
     },
   })
+  self._win:mount()
+  self._is_visible = true
 end
 
 ---Mount the explorer component
 function ProjectView:mount()
   ---Mount the component
   self:_create_win()
-  self._win:mount()
-  self._is_visible = true
   ---Create the header  line
   self:_create_menu_header_line()
   ---Create the Projects line
@@ -448,22 +459,31 @@ function ProjectView:mount()
   self:_setup_win_maps()
 end
 
+---Hide the ui
 function ProjectView:hide()
   self._win:hide()
   self._is_visible = false
 end
 
+---Show the ui
 function ProjectView:show()
   self._win:show()
   self._is_visible = true
 end
 
+---Toggle the ui
 function ProjectView:toggle()
   if self._is_visible then
     self:hide()
   else
     self:show()
   end
+end
+
+---Show the ui
+function ProjectView:unmount()
+  self._win:unmount()
+  self._is_visible = false
 end
 
 return ProjectView
