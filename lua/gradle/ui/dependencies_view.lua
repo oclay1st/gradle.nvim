@@ -132,11 +132,10 @@ end
 function DependenciesView:_toggle_filter()
   if self._is_filter_visible then
     self._dependency_filter:hide()
-    self._is_filter_visible = false
   else
     self._dependency_filter:show()
-    self._is_filter_visible = true
   end
+  self._is_filter_visible = not self._is_filter_visible
 end
 
 ---@private Create the dependencies tree
@@ -295,13 +294,15 @@ function DependenciesView:_create_dependency_filter()
       self:_on_filter_change(value, dependencies_nodes)
     end,
   })
-
-  self._dependency_filter:on(event.BufLeave, function()
-    self._dependency_filter:hide()
+  self._dependency_filter:map('i', '<enter>', function()
+    vim.cmd('stopinsert')
+    self:_toggle_filter()
   end)
-
+  self._dependency_filter:map('n', '<enter>', function()
+    self:_toggle_filter()
+  end)
   self._dependency_filter:map('n', { '<esc>', 'q' }, function()
-    self._dependency_filter:hide()
+    self:_toggle_filter()
   end)
 end
 
@@ -322,6 +323,7 @@ function DependenciesView:_create_layout()
       Layout.Box(self._dependency_usages_win, { size = '50%' }),
     }, { dir = 'row' })
   )
+  self._layout:mount()
   local wins = { self._dependencies_win, self._dependency_usages_win }
   for _, win in pairs(wins) do
     win:on(event.BufLeave, function()
@@ -332,11 +334,13 @@ function DependenciesView:_create_layout()
             return
           end
         end
+        self._dependency_filter:unmount()
         self._layout:unmount()
         vim.api.nvim_set_current_win(self._prev_win)
       end)
     end)
     win:map('n', { '<esc>', 'q' }, function()
+      self._dependency_filter:unmount()
       self._layout:unmount()
       vim.api.nvim_set_current_win(self._prev_win)
     end)
@@ -351,7 +355,6 @@ function DependenciesView:mount()
   self:_create_dependency_usages_win()
   ---Setup the layout
   self:_create_layout()
-  self._layout:mount()
   ---Setup the dependency filter
   self:_create_dependency_filter()
 end
