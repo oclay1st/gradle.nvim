@@ -157,7 +157,13 @@ function ExecuteView:_create_input_component()
       for item in string.gmatch(value, '[^%s]+') do
         table.insert(args, item)
       end
-      Console.execute_command(GradleConfig.options.gradle_executable, args, true)
+      Console.execute_command(GradleConfig.options.gradle_executable, args, true, function(state)
+        vim.schedule(function()
+          if Utils.FAILED_STATE == state then
+            vim.notify('Failed command execution', vim.log.levels.ERROR)
+          end
+        end)
+      end)
     end,
     on_change = function(query)
       self:_on_input_change(query)
