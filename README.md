@@ -12,10 +12,11 @@
 </div>
 
 ## 🔥 Status
-This plugin is under **development** and has some known issues, so it is **not** considered stable enough.
+This plugin is under **Development**.
 
 ## ✨ Features
 
+- Create projects from scratch
 - Execute tasks and custom commands
 - List dependencies and their relationship
 - Analyze dependencies usages, conflicts and duplications
@@ -59,6 +60,7 @@ This plugin is under **development** and has some known issues, so it is **not**
     show_task_execution = true,
     show_dependencies_load_execution = false,
     show_tasks_load_execution = false,
+    show_create_project_execution = false,
   },
   gradle_executable = 'gradle',
   custom_commands = {
@@ -69,5 +71,10 @@ This plugin is under **development** and has some known issues, so it is **not**
     --   description = "build the project",
     -- }
   }, 
+  workspaces = {
+    -- Default Examples:
+    -- { name = 'HOME', path = vim.loop.os_homedir() },
+    -- { name = 'CURRENT_DIR', path = vim.fn.getcwd() },
+  },
 }
 ```
