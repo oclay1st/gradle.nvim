@@ -8,7 +8,7 @@ local DependencyTreeParser = require('gradle.parsers.dependency_tree_parser')
 local HelpOptionsParser = require('gradle.parsers.help_options_parser')
 local CommandBuilder = require('gradle.utils.cmd_builder')
 local Utils = require('gradle.utils')
-local console = require('gradle.utils.console')
+local Console = require('gradle.utils.console')
 
 local M = {}
 
@@ -122,7 +122,7 @@ M.load_project_tasks = function(project_path, callback)
   end
   local command = CommandBuilder.build_gradle_tasks_cmd(project_path)
   local show_output = GradleConfig.options.console.show_tasks_load_execution
-  console.execute_command(command.cmd, command.args, show_output, _callback)
+  Console.execute_command(command.cmd, command.args, show_output, _callback)
 end
 
 M.load_project_dependencies = function(project_path, callback)
@@ -136,7 +136,7 @@ M.load_project_dependencies = function(project_path, callback)
   end
   local command = CommandBuilder.build_gradle_dependencies_cmd(project_path)
   local show_output = GradleConfig.options.console.show_dependencies_load_execution
-  console.execute_command(command.cmd, command.args, show_output, _callback)
+  Console.execute_command(command.cmd, command.args, show_output, _callback)
 end
 
 M.load_help_options = function(callback)
@@ -149,7 +149,7 @@ M.load_help_options = function(callback)
     callback(state, help_options)
   end
   local command = CommandBuilder.build_gradle_help_cmd()
-  console.execute_command(command.cmd, command.args, false, _callback)
+  Console.execute_command(command.cmd, command.args, false, _callback)
 end
 
 return M
