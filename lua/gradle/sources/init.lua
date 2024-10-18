@@ -12,9 +12,9 @@ local Console = require('gradle.utils.console')
 
 local M = {}
 
-local build_gradle_file_pattern = '.*build.gradle'
+local build_gradle_file_pattern = '.*build%.gradle'
 
-local settings_gradle_file_pattern = '.*settings.gradle'
+local settings_gradle_file_pattern = '.*settings%.gradle'
 
 local scanned_path_list ---@type string[]
 
