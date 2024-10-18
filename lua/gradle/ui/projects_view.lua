@@ -346,7 +346,7 @@ function ProjectView:_create_projects_header_line()
   self._projects_header_line = NuiLine()
   local project_text = ' Projects:'
   if #self.projects == 0 then
-    project_text = project_text .. ' (create a new project) '
+    project_text = project_text .. ' (Create a new Project) '
   end
   self._projects_header_line:append(project_text, highlights.DIM_TEXT)
   self._projects_header_line:render(self._win.bufnr, GradleConfig.namespace, 2)

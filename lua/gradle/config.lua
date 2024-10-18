@@ -8,6 +8,10 @@ M.namespace = vim.api.nvim_create_namespace('gradle')
 ---@field position string
 ---@field size integer
 
+---@class InitializerView
+---@field default_package string
+---@field workspaces Workspace[]
+
 ---@class CustomCommand
 ---@field name string
 ---@field description string
@@ -35,6 +39,13 @@ local defaultOptions = {
     position = 'right',
     size = 68,
   },
+  initializer_view = {
+    default_package = '',
+    workspaces = {
+      { name = 'HOME', path = vim.loop.os_homedir() },
+      { name = 'CURRENT_DIR', path = vim.fn.getcwd() },
+    },
+  },
   console = {
     show_command_execution = true,
     show_task_execution = true,
@@ -44,10 +55,6 @@ local defaultOptions = {
   },
   gradle_executable = 'gradle',
   custom_commands = {},
-  workspaces = {
-    { name = 'HOME', path = vim.loop.os_homedir() },
-    { name = 'CURRENT_DIR', path = vim.fn.getcwd() },
-  },
 }
 
 ---@type GradleOptions

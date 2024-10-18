@@ -104,6 +104,7 @@ function InitializerView:_create_project_package_component()
       border = { text = { top = ' Create Project - Package 2/6 ' } },
     }),
     {
+      default_value = GradleConfig.options.initializer_view.default_package or '',
       prompt = '> ',
       on_change = function(value)
         self._project_package = value
@@ -274,7 +275,7 @@ end
 function InitializerView:_create_directory_component()
   self._directory_component = Popup(vim.tbl_deep_extend('force', self._default_opts, {
     enter = true,
-    size = { height = #GradleConfig.options.workspaces },
+    size = { height = #GradleConfig.options.initializer_view.workspaces },
     win_options = { cursorline = true },
     border = { text = { top = ' Create Project - Directory 6/6 ' } },
   }))
@@ -283,21 +284,14 @@ function InitializerView:_create_directory_component()
     bufnr = self._directory_component.bufnr,
     prepare_node = function(node)
       local line = Line()
-      line:append(' ')
-      line:append(node.text)
+      line:append(' ' .. node.text)
       line:append(' ' .. node.path, highlights.DIM_TEXT)
       return line
     end,
   })
   local nodes = {}
-  for _, workspace in ipairs(GradleConfig.options.workspaces) do
-    table.insert(
-      nodes,
-      Tree.Node({
-        text = workspace.name,
-        path = workspace.path,
-      })
-    )
+  for _, workspace in ipairs(GradleConfig.options.initializer_view.workspaces) do
+    table.insert(nodes, Tree.Node({ text = workspace.name, path = workspace.path }))
   end
   options_tree:set_nodes(nodes)
   options_tree:render()
