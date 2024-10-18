@@ -34,7 +34,7 @@ This plugin is under **Development**.
 ```lua
 {
    "oclay1st/gradle.nvim",
-   cmd = 'Gradle',
+   cmd = { "Gradle", "GradleExec", "GradleInit" },
    dependencies = {
       "nvim-lua/plenary.nvim",
       "MunifTanjim/nui.nvim",

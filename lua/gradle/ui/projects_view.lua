@@ -359,13 +359,11 @@ function ProjectView:_setup_win_maps()
   end)
 
   self._win:map('n', 'c', function()
-    local initializer_view = InitializerView.new()
-    initializer_view:mount()
+    require('gradle').show_initializer_view()
   end)
 
   self._win:map('n', 'e', function()
-    local execute_view = ExecuteView.new()
-    execute_view:mount()
+    require('gradle').show_execute_view()
   end)
 
   self._win:map('n', 'a', function()
