@@ -52,14 +52,14 @@ This plugin is under **Development**.
 ```lua
 {
   projects_view = {
-    position = 'right', -- Example: right or left
+    position = "right", -- Example: right or left
     size = 68,
   },
   initializer_view = {
     default_package = '', -- Example: io.github.username
     workspaces = {
-      { name = 'HOME', path = vim.loop.os_homedir() },
-      { name = 'CURRENT_DIR', path = vim.fn.getcwd() },
+      { name = "HOME", path = vim.loop.os_homedir() },
+      { name = "CURRENT_DIR", path = vim.fn.getcwd() },
     },
   },
   console = {
@@ -69,7 +69,7 @@ This plugin is under **Development**.
     show_tasks_load_execution = false,
     show_create_project_execution = false,
   },
-  gradle_executable = 'gradle', -- Example: gradle, ./gradlew or a path to Gradle executable
+  gradle_executable = "gradle", -- Example: gradle, ./gradlew or a path to Gradle executable
   custom_commands = {
     -- Example: 
     -- {

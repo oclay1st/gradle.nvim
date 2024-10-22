@@ -40,5 +40,4 @@ jobs:
         shell: bash
         run: |
           luarocks install luacheck
-          luarocks install vusted
-          vusted ./test
+          ./scripts/test.sh
