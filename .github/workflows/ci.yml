@@ -40,4 +40,4 @@ jobs:
         shell: bash
         run: |
           luarocks install luacheck
-          ./scripts/test.sh
+          scripts/test.sh
