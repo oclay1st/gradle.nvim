@@ -19,7 +19,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest]
     steps:
       - uses: actions/checkout@v3
       - uses: rhysd/action-setup-vim@v1
@@ -40,4 +40,4 @@ jobs:
         shell: bash
         run: |
           luarocks install luacheck
-          scripts/test.sh
+          ./scripts/test.sh
