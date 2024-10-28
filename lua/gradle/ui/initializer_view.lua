@@ -24,7 +24,6 @@ local Utils = require('gradle.utils')
 ---@field private _directory_component NuiPopup
 ---@field private _directory string
 ---@field private _default_opts table
----@field private _default_layout_opts table
 ---@field private _prev_win number
 local InitializerView = {}
 InitializerView.__index = InitializerView
@@ -68,7 +67,7 @@ function InitializerView:_create_project_name_component()
   self._project_name_component = Input(
     vim.tbl_deep_extend('force', self._default_opts, {
       enter = true,
-      border = { text = { top = ' Create Project - Name 1/6 ' } },
+      border = { text = { top = ' Create Gradle Project - Name 1/6 ' } },
     }),
     {
       prompt = '> ',
@@ -101,7 +100,7 @@ function InitializerView:_create_project_package_component()
     vim.tbl_deep_extend('force', self._default_opts, {
       enter = true,
       size = { height = 1 },
-      border = { text = { top = ' Create Project - Package 2/6 ' } },
+      border = { text = { top = ' Create Gradle Project - Package 2/6 ' } },
     }),
     {
       default_value = GradleConfig.options.initializer_view.default_package or '',
@@ -140,7 +139,7 @@ function InitializerView:_create_java_version_component()
     enter = true,
     size = { height = 3 },
     win_options = { cursorline = true },
-    border = { text = { top = ' Create Project - Java Version 3/6 ' } },
+    border = { text = { top = ' Create Gradle Project - Java Version 3/6 ' } },
   }))
   local options_tree = Tree({
     ns_id = GradleConfig.namespace,
@@ -186,7 +185,7 @@ function InitializerView:_create_dsl_component()
     enter = true,
     size = { height = 2 },
     win_options = { cursorline = true },
-    border = { text = { top = ' Create Project - DSL 4/6 ' } },
+    border = { text = { top = ' Create Gradle Project - DSL 4/6 ' } },
   }))
   local options_tree = Tree({
     ns_id = GradleConfig.namespace,
@@ -231,7 +230,7 @@ function InitializerView:_create_test_framework_component()
     enter = true,
     size = { height = 3 },
     win_options = { cursorline = true },
-    border = { text = { top = '  Create Project - Test Framework 5/6 ' } },
+    border = { text = { top = '  Create Gradle Project - Test Framework 5/6 ' } },
   }))
   local options_tree = Tree({
     ns_id = GradleConfig.namespace,
@@ -277,7 +276,7 @@ function InitializerView:_create_directory_component()
     enter = true,
     size = { height = #GradleConfig.options.initializer_view.workspaces },
     win_options = { cursorline = true },
-    border = { text = { top = ' Create Project - Directory 6/6 ' } },
+    border = { text = { top = ' Create Gradle Project - Directory 6/6 ' } },
   }))
   local options_tree = Tree({
     ns_id = GradleConfig.namespace,
@@ -329,7 +328,7 @@ function InitializerView:_create_project()
   directory:mkdir()
   local _callback = function(state)
     vim.schedule(function()
-      if Utils.SUCCEED_STATE == state then
+      if state == Utils.SUCCEED_STATE then
         local choice = vim.fn.confirm(
           'Project created successfully \nDo you want to switch to the New Project?',
           '&Yes\n&No'
@@ -338,13 +337,15 @@ function InitializerView:_create_project()
           vim.api.nvim_set_current_dir(directory:absolute())
           require('gradle').refresh()
         end
+      elseif state == Utils.FAILED_STATE then
+        vim.notify('Error creating  project: ' .. vim.trim(self._project_name))
       end
     end)
   end
   vim.notify('Creating a new Gradle Project...')
   local command = CommandBuilder.create_project(
-    self._project_name,
-    self._project_package,
+    vim.trim(self._project_name),
+    vim.trim(self._project_package),
     self._java_version,
     self._dsl,
     self._test_framework,
