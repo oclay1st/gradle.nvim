@@ -43,14 +43,14 @@ end
 
 M.show_execute_view = function()
   if not execute_view then
-    execute_view = ExecuteView:new()
+    execute_view = ExecuteView.new()
   end
   execute_view:mount()
 end
 
 M.show_initializer_view = function()
   if not initializer_view then
-    initializer_view = InitializerView:new()
+    initializer_view = InitializerView.new()
   end
   initializer_view:mount()
 end
