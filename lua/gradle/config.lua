@@ -37,7 +37,7 @@ M.namespace = vim.api.nvim_create_namespace('gradle')
 local defaultOptions = {
   projects_view = {
     position = 'right',
-    size = 68,
+    size = 66,
   },
   initializer_view = {
     default_package = '',

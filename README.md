@@ -53,7 +53,7 @@ This plugin is under **Development**.
 {
   projects_view = {
     position = "right", -- Example: right or left
-    size = 68,
+    size = 66,
   },
   initializer_view = {
     default_package = '', -- Example: io.github.username
