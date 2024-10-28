@@ -74,7 +74,7 @@ function ExecuteView:_load_options_nodes()
           table.insert(options_nodes, node)
         end
         self._options_tree:set_nodes(options_nodes)
-        self._options_tree:render(1)
+        self._options_tree:render()
       end
     end)
   end)
@@ -106,7 +106,7 @@ function ExecuteView:_create_options_tree_list()
 end
 
 ---@private On input change handler
----@param query any
+---@param query string
 function ExecuteView:_on_input_change(query)
   local current_node = self._options_tree:get_node()
   if query == '' and current_node and current_node.type == 'loading' then
@@ -125,6 +125,9 @@ function ExecuteView:_on_input_change(query)
     end
     self._options_tree:set_nodes(nodes)
     self._options_tree:render()
+    if self._options_component.winid then
+      vim.api.nvim_win_set_cursor(self._options_component.winid, { 1, 0 })
+    end
   end)
 end
 
@@ -144,9 +147,9 @@ function ExecuteView:_create_input_component()
     },
     zindex = 60,
     border = {
-      style = 'rounded',
+      style = { '╭', '─', '╮', '│', '│', '─', '│', '│' },
       text = {
-        top = ' Execute Command ',
+        top = ' Execute Gradle Command ',
         top_align = 'center',
       },
     },
@@ -169,13 +172,17 @@ function ExecuteView:_create_input_component()
       self:_on_input_change(query)
     end,
   })
-  self._input_component:map('i', { '<C-n>', '<Down>' }, function()
+  local function move_next()
     vim.api.nvim_set_current_win(self._options_component.winid)
     vim.api.nvim_win_set_cursor(self._options_component.winid, { 1, 0 })
-  end)
+  end
+  self._input_component:map('i', { '<C-n>', '<Down>' }, move_next)
+  self._input_component:map('n', { 'j', '<C-n>', '<Down>' }, move_next)
   self._input_component:map('n', { '<esc>', 'q' }, function()
     self._layout:unmount()
-    vim.api.nvim_set_current_win(self._prev_win)
+    if vim.api.nvim_win_is_valid(self._prev_win) then
+      vim.api.nvim_set_current_win(self._prev_win)
+    end
   end)
 end
 
@@ -184,7 +191,7 @@ function ExecuteView:_create_options_component()
   self._options_component = Popup(vim.tbl_deep_extend('force', self._default_opts, {
     win_options = { cursorline = true },
     border = {
-      style = 'rounded',
+      style = { '', '', '', '│', '╯', '─', '╰', '│' },
     },
   }))
   self:_create_options_tree_list()
@@ -200,7 +207,16 @@ function ExecuteView:_create_options_component()
       vim.api.nvim_buf_set_lines(self._input_component.bufnr, 0, 1, false, { text })
       self._input_prompt:highlight(self._input_component.bufnr, GradleConfig.namespace, 1, 0)
       vim.api.nvim_set_current_win(self._input_component.winid)
+      vim.api.nvim_win_set_cursor(self._options_component.winid, { 1, 0 })
+      vim.api.nvim_win_set_cursor(self._input_component.winid, { 1, string.len(text) })
+      vim.cmd('startinsert!')
     end)
+  end)
+  self._options_component:map('n', { 'i' }, function()
+    vim.api.nvim_win_set_cursor(self._options_component.winid, { 1, 0 })
+    vim.api.nvim_set_current_win(self._input_component.winid)
+    vim.api.nvim_win_set_cursor(self._input_component.winid, { 1, 0 })
+    vim.cmd('startinsert!')
   end)
   self._options_component:map('n', { '<esc>', 'q' }, function()
     self._layout:unmount()
@@ -250,7 +266,6 @@ function ExecuteView:mount()
   self:_create_input_component()
   -- create the layout
   self:_create_layout()
-  -- mount the layout
 end
 
 return ExecuteView
