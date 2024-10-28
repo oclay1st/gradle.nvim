@@ -19,6 +19,7 @@ local icons = require('gradle.ui.icons')
 ---@field private _default_opts table
 ---@field private _prev_win number
 ---@field private _is_filter_visible boolean
+---@field private _filter_value string | nil
 ---@field dependencies Project.Dependency[]
 ---@field project_name string
 local DependenciesView = {}
@@ -94,7 +95,11 @@ end
 function DependenciesView:_create_dependencies_win()
   local dependencies_win_opts = vim.tbl_deep_extend('force', self._default_opts, {
     enter = true,
-    border = { text = { top = ' Resolved Dependencies (' .. self.project_name .. ') ' } },
+    border = {
+      text = {
+        top = ' Resolved Dependencies (' .. self.project_name .. ') ',
+      },
+    },
   })
   self._dependencies_win = Popup(dependencies_win_opts)
   self:_create_dependencies_tree()
@@ -132,8 +137,19 @@ end
 function DependenciesView:_toggle_filter()
   if self._is_filter_visible then
     self._dependency_filter:hide()
+    if self._filter_value == '' then
+      self._dependencies_win.border:set_text('bottom')
+    else
+      self._dependencies_win.border:set_text(
+        'bottom',
+        Text(' Filtered by: "' .. self._filter_value .. '" ', highlights.DIM_TEXT),
+        'left'
+      )
+    end
+    vim.cmd('stopinsert')
   else
     self._dependency_filter:show()
+    vim.cmd('startinsert!')
   end
   self._is_filter_visible = not self._is_filter_visible
 end
@@ -250,6 +266,7 @@ end
 
 ---@private React on filter change
 function DependenciesView:_on_filter_change(search, dependencies_nodes)
+  self._filter_value = search
   vim.schedule(function()
     local nodes = {}
     local _search = string.gsub(search, '%W', '%%%1') -- scape special characters
@@ -295,7 +312,6 @@ function DependenciesView:_create_dependency_filter()
     end,
   })
   self._dependency_filter:map('i', '<enter>', function()
-    vim.cmd('stopinsert')
     self:_toggle_filter()
   end)
   self._dependency_filter:map('n', '<enter>', function()
