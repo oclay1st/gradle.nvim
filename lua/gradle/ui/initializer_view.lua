@@ -80,8 +80,11 @@ function InitializerView:_create_project_name_component()
     if vim.fn.trim(self._project_name) == '' then
       vim.notify('Empty project name', vim.log.levels.ERROR)
     else
-      self._project_name_component:hide()
-      self._project_package_component:show()
+      vim.cmd('stopinsert')
+      vim.schedule(function()
+        self._project_name_component:hide()
+        self._project_package_component:show()
+      end)
     end
   end
   self._project_name_component:map('n', '<CR>', submit)
@@ -114,9 +117,11 @@ function InitializerView:_create_project_package_component()
     if not string.match(self._project_package, '(%w+)%.(%w+)') then
       vim.notify('Bad package name format', vim.log.levels.ERROR)
     else
-      self._project_package_component:hide()
-      self._java_version_component:show()
       vim.cmd('stopinsert')
+      vim.schedule(function()
+        self._project_package_component:hide()
+        self._java_version_component:show()
+      end)
     end
   end
   self._project_package_component:map('n', '<CR>', submit)
