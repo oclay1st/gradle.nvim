@@ -77,12 +77,12 @@ end
 
 ---Load the gradle projects given a directory
 ---@param base_path string
----@return Project[]
-M.scan_projects = function(base_path)
+---@param callback fun(projects: Project[])
+M.scan_projects = function(base_path, callback)
   local projects = {}
   scanned_path_list = {}
   custom_commands = create_custom_commands()
-  scan.scan_dir(base_path, {
+  scan.scan_dir_async(base_path, {
     search_pattern = { build_gradle_file_pattern, settings_gradle_file_pattern },
     depth = 10,
     on_insert = function(gradle_file_path)
@@ -107,8 +107,10 @@ M.scan_projects = function(base_path)
         table.insert(scanned_path_list, gradle_file_path)
       end
     end,
+    on_exit = function()
+      callback(projects)
+    end,
   })
-  return projects
 end
 
 M.load_project_tasks = function(project_path, callback)

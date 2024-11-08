@@ -21,9 +21,15 @@ end
 
 local function load_projects_view()
   local workspace_path = vim.fn.getcwd()
-  local projects = Sources.scan_projects(workspace_path)
-  projects_view = ProjectView.new(projects)
+  projects_view = ProjectView.new()
   projects_view:mount()
+  projects_view:set_loading(true)
+  Sources.scan_projects(workspace_path, function(projects)
+    vim.schedule(function()
+      projects_view:refresh_projects(projects)
+      projects_view:set_loading(false)
+    end)
+  end)
 end
 
 M.toggle_projects_view = function()

@@ -3,8 +3,6 @@ local NuiLine = require('nui.line')
 local NuiSplit = require('nui.split')
 local DependenciesView = require('gradle.ui.dependencies_view')
 local HelpView = require('gradle.ui.help_view')
-local ExecuteView = require('gradle.ui.execute_view')
-local InitializerView = require('gradle.ui.initializer_view')
 local Sources = require('gradle.sources')
 local Utils = require('gradle.utils')
 local CommandBuilder = require('gradle.utils.cmd_builder')
@@ -54,11 +52,11 @@ local ProjectView = {}
 ProjectView.__index = ProjectView
 
 ---Create a new ProjectView
----@param projects Project[]
+---@param projects? Project[]
 ---@return ProjectView
 function ProjectView.new(projects)
   return setmetatable({
-    projects = projects,
+    projects = projects or {},
   }, ProjectView)
 end
 
@@ -273,7 +271,7 @@ function ProjectView:_create_project_node(project)
 end
 
 ---Create the tree component
-function ProjectView:_create_tree()
+function ProjectView:_render_projects_tree()
   self._tree = NuiTree({
     ns_id = GradleConfig.namespace,
     bufnr = self._win.bufnr,
@@ -304,9 +302,14 @@ function ProjectView:_create_tree()
       return line
     end,
   })
+  self:_render_tree_nodes()
+end
+
+---@private Render project tree
+function ProjectView:_render_tree_nodes()
   local nodes = {}
-  for index, value in ipairs(self.projects) do
-    nodes[index] = self:_create_project_node(value)
+  for index, project in ipairs(self.projects) do
+    nodes[index] = self:_create_project_node(project)
   end
   self._tree:set_nodes(nodes)
   self._tree:render(3)
@@ -316,7 +319,7 @@ function ProjectView:_create_tree()
 end
 
 ---@private Create the header line
-function ProjectView:_create_menu_header_line()
+function ProjectView:_render_menu_header_line()
   local line = NuiLine()
   local separator = ' '
   line:append(' ' .. icons.default.gradle .. ' Gradle ' .. separator, highlights.SPECIAL_TEXT)
@@ -342,14 +345,28 @@ function ProjectView:_create_menu_header_line()
 end
 
 ---@private Create the projects header line
-function ProjectView:_create_projects_header_line()
-  self._projects_header_line = NuiLine()
-  local project_text = ' Projects:'
-  if #self.projects == 0 then
-    project_text = project_text .. ' (Create a new Project) '
-  end
-  self._projects_header_line:append(project_text, highlights.DIM_TEXT)
+---@param line NuiLine
+function ProjectView:_render_projects_header_line(line)
+  self._projects_header_line = line
   self._projects_header_line:render(self._win.bufnr, GradleConfig.namespace, 2)
+end
+
+---@private Create the projects header line
+function ProjectView:_create_projects_line()
+  local line = NuiLine()
+  line:append(' Projects:', highlights.DIM_TEXT)
+  if #self.projects == 0 then
+    line:append(' (Projects not found, create a new one!) ', highlights.DIM_TEXT)
+  end
+  return line
+end
+
+---@private Create the projects scanning line
+function ProjectView:_create_projects_scanning_line()
+  local line = NuiLine()
+  line:append(' Projects:', highlights.DIM_TEXT)
+  line:append(' ...scanning directory ', highlights.DIM_TEXT)
+  return line
 end
 
 ---@private Setup key maps
@@ -418,7 +435,7 @@ function ProjectView:_setup_win_maps()
 end
 
 ---@private Create win component
-function ProjectView:_create_win()
+function ProjectView:_render_win()
   self._win = NuiSplit({
     ns_id = GradleConfig.namespace,
     relative = 'editor',
@@ -446,13 +463,14 @@ end
 ---Mount the explorer component
 function ProjectView:mount()
   ---Mount the component
-  self:_create_win()
+  self:_render_win()
   ---Create the header  line
-  self:_create_menu_header_line()
+  self:_render_menu_header_line()
   ---Create the Projects line
-  self:_create_projects_header_line()
+  local _line = self:_create_projects_line()
+  self:_render_projects_header_line(_line)
   ---Create the tree
-  self:_create_tree()
+  self:_render_projects_tree()
   ---Setup maps
   self:_setup_win_maps()
 end
@@ -482,6 +500,29 @@ end
 function ProjectView:unmount()
   self._win:unmount()
   self._is_visible = false
+end
+
+---Set project loading
+---@param loading boolean
+function ProjectView:set_loading(loading)
+  local line
+  if loading then
+    line = self:_create_projects_scanning_line()
+  else
+    line = self:_create_projects_line()
+  end
+  vim.api.nvim_set_option_value('modifiable', true, { buf = self._win.bufnr })
+  vim.api.nvim_set_option_value('readonly', false, { buf = self._win.bufnr })
+  self:_render_projects_header_line(line)
+  vim.api.nvim_set_option_value('modifiable', false, { buf = self._win.bufnr })
+  vim.api.nvim_set_option_value('readonly', true, { buf = self._win.bufnr })
+end
+
+---Refresh projects
+---@param projects Project[]
+function ProjectView:refresh_projects(projects)
+  self.projects = projects
+  self:_render_tree_nodes()
 end
 
 return ProjectView
