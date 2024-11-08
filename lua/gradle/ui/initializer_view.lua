@@ -356,7 +356,7 @@ function InitializerView:_create_project()
     self._test_framework,
     self._directory
   )
-  local show_output = GradleConfig.options.console.show_create_project_execution
+  local show_output = GradleConfig.options.console.show_project_create_execution
   Console.execute_command(command.cmd, command.args, show_output, _callback)
 end
 

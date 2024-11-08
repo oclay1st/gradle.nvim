@@ -67,7 +67,7 @@ This plugin is under **Development**.
     show_task_execution = true,
     show_dependencies_load_execution = false,
     show_tasks_load_execution = false,
-    show_create_project_execution = false,
+    show_project_create_execution = false,
   },
   gradle_executable = "gradle", -- Example: gradle, ./gradlew or a path to Gradle executable
   custom_commands = {
