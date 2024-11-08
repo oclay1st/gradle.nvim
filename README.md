@@ -77,6 +77,7 @@ This plugin is under **Development**.
     --   cmd_args = { "build" },
     --   description = "build the project",
     -- }
-  } 
+  }, 
+  project_scanner_depth = 5
 }
 ```

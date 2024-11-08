@@ -32,6 +32,7 @@ M.namespace = vim.api.nvim_create_namespace('gradle')
 ---@field projects_view? ProjectsView
 ---@field console ConsoleView
 ---@field gradle_executable string the name or path of mvn
+---@field project_scanner_depth number
 ---@field custom_commands CustomCommand[]
 ---@field workspaces Workspace[]
 local defaultOptions = {
@@ -55,6 +56,7 @@ local defaultOptions = {
   },
   gradle_executable = 'gradle',
   custom_commands = {},
+  project_scanner_depth = 5,
 }
 
 ---@type GradleOptions

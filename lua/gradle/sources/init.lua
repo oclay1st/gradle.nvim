@@ -84,7 +84,7 @@ M.scan_projects = function(base_path, callback)
   custom_commands = create_custom_commands()
   scan.scan_dir_async(base_path, {
     search_pattern = { build_gradle_file_pattern, settings_gradle_file_pattern },
-    depth = 10,
+    depth = GradleConfig.options.project_scanner_depth,
     on_insert = function(gradle_file_path)
       if not vim.tbl_contains(scanned_path_list, gradle_file_path) then
         local project = find_project(gradle_file_path, projects)
