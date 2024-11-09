@@ -39,11 +39,16 @@ This plugin is under **Development**.
       "nvim-lua/plenary.nvim",
       "MunifTanjim/nui.nvim",
    },
-   config = function()
-     require("gradle").setup({
-      -- options, see default configuration
-    })
-   end
+   opts = {}, -- options, see default configuration
+   keys = {
+      {
+        "<Leader>G",
+        function()
+          require("gradle").toggle_projects_view()
+        end,
+        desc = "Gradle",
+      },
+   }
 }
 ```
 
