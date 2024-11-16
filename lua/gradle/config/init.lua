@@ -23,6 +23,7 @@ M.namespace = vim.api.nvim_create_namespace('gradle')
 ---@field show_dependencies_load_execution boolean
 ---@field show_tasks_load_execution boolean
 ---@field show_project_create_execution boolean
+---@field clean_before_execution boolean
 
 ---@class Workspace
 ---@field name string
@@ -53,6 +54,7 @@ local defaultOptions = {
     show_dependencies_load_execution = false,
     show_tasks_load_execution = false,
     show_project_create_execution = false,
+    clean_before_execution = true,
   },
   gradle_executable = 'gradle',
   custom_commands = {},

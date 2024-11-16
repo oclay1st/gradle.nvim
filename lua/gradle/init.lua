@@ -1,4 +1,4 @@
-local highlights = require('gradle.highlights')
+local highlights = require('gradle.config.highlights')
 local GradleConfig = require('gradle.config')
 local Sources = require('gradle.sources')
 local ProjectView = require('gradle.ui.projects_view')

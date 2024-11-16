@@ -6,7 +6,7 @@ local Text = require('nui.text')
 local Popup = require('nui.popup')
 local icons = require('gradle.ui.icons')
 local Sources = require('gradle.sources')
-local highlights = require('gradle.highlights')
+local highlights = require('gradle.config.highlights')
 local GradleConfig = require('gradle.config')
 local Utils = require('gradle.utils')
 local Console = require('gradle.utils.console')
@@ -63,7 +63,7 @@ end
 function ExecuteView:_load_options_nodes()
   Sources.load_help_options(function(state, help_options)
     vim.schedule(function()
-      if Utils.SUCCEED_STATE == state then
+      if state == Utils.SUCCEED_STATE then
         table.sort(help_options, function(a, b)
           return a.name < b.name
         end)
@@ -162,7 +162,7 @@ function ExecuteView:_create_input_component()
       end
       Console.execute_command(GradleConfig.options.gradle_executable, args, true, function(state)
         vim.schedule(function()
-          if Utils.FAILED_STATE == state then
+          if state == Utils.FAILED_STATE then
             vim.notify('Failed command execution', vim.log.levels.ERROR)
           end
         end)

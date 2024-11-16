@@ -5,7 +5,7 @@ local Popup = require('nui.popup')
 local Input = require('nui.input')
 local Layout = require('nui.layout')
 local event = require('nui.utils.autocmd').event
-local highlights = require('gradle.highlights')
+local highlights = require('gradle.config.highlights')
 local GradleConfig = require('gradle.config')
 local icons = require('gradle.ui.icons')
 

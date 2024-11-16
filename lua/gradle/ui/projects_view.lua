@@ -8,7 +8,7 @@ local Utils = require('gradle.utils')
 local CommandBuilder = require('gradle.utils.cmd_builder')
 local Console = require('gradle.utils.console')
 local GradleConfig = require('gradle.config')
-local highlights = require('gradle.highlights')
+local highlights = require('gradle.config.highlights')
 local icons = require('gradle.ui.icons')
 
 local node_type_props = {
@@ -113,7 +113,7 @@ end
 function ProjectView:_load_tasks_nodes(node, project)
   Sources.load_project_tasks(project.root_path, function(state, tasks)
     vim.schedule(function()
-      if Utils.SUCCEED_STATE == state then
+      if state == Utils.SUCCEED_STATE then
         project:set_tasks(tasks)
         local group_nodes = {}
         for _, group_item in ipairs(project:group_tasks_by_group_name()) do
@@ -155,7 +155,7 @@ end
 function ProjectView:_load_dependencies_nodes(node, project, on_success)
   Sources.load_project_dependencies(project.root_path, function(state, dependencies)
     vim.schedule(function()
-      if Utils.SUCCEED_STATE == state then
+      if state == Utils.SUCCEED_STATE then
         project:set_dependencies(dependencies)
         for _, group_item in ipairs(project:group_dependencies_by_configuration()) do
           local configuration_node = NuiTree.Node({

@@ -1,7 +1,7 @@
 local NuiPopup = require('nui.popup')
 local NuiLine = require('nui.line')
 local event = require('nui.utils.autocmd').event
-local highlights = require('gradle.highlights')
+local highlights = require('gradle.config.highlights')
 local GradleConfig = require('gradle.config')
 local M = {}
 
