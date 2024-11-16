@@ -40,15 +40,7 @@ This plugin is under **Development**.
       "MunifTanjim/nui.nvim",
    },
    opts = {}, -- options, see default configuration
-   keys = {
-      {
-        "<Leader>G",
-        function()
-          require("gradle").toggle_projects_view()
-        end,
-        desc = "Gradle",
-      },
-   }
+   keys = { { "<Leader>G", "<cmd>Gradle<cr>", desc = "Gradle" } },
 }
 ```
 
