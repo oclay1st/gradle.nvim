@@ -114,37 +114,49 @@ M.scan_projects = function(base_path, callback)
 end
 
 M.load_project_tasks = function(project_path, callback)
+  local show_output = GradleConfig.options.console.show_tasks_load_execution
   local _callback = function(state, job)
     local tasks
-    if Utils.SUCCEED_STATE == state then
+    if state == Utils.SUCCEED_STATE then
       local content_lines = job:result()
       tasks = TasksParser.parse(content_lines)
+    elseif state == Utils.FAILED_STATE then
+      local error_msg = 'Error loading tasks. '
+      if not show_output then
+        error_msg = error_msg .. 'Enable the console output for more details.'
+      end
+      vim.notify(error_msg, vim.log.levels.ERROR)
     end
     callback(state, tasks)
   end
   local command = CommandBuilder.build_gradle_tasks_cmd(project_path)
-  local show_output = GradleConfig.options.console.show_tasks_load_execution
   Console.execute_command(command.cmd, command.args, show_output, _callback)
 end
 
 M.load_project_dependencies = function(project_path, callback)
+  local show_output = GradleConfig.options.console.show_dependencies_load_execution
   local _callback = function(state, job)
     local dependencies
-    if Utils.SUCCEED_STATE == state then
+    if state == Utils.SUCCEED_STATE then
       local output_lines = job:result()
       dependencies = DependencyTreeParser.parse(output_lines)
+    elseif state == Utils.FAILED_STATE then
+      local error_msg = 'Error loading dependencies. '
+      if not show_output then
+        error_msg = error_msg .. 'Enable the console output for more details.'
+      end
+      vim.notify(error_msg, vim.log.levels.ERROR)
     end
     callback(state, dependencies)
   end
   local command = CommandBuilder.build_gradle_dependencies_cmd(project_path)
-  local show_output = GradleConfig.options.console.show_dependencies_load_execution
   Console.execute_command(command.cmd, command.args, show_output, _callback)
 end
 
 M.load_help_options = function(callback)
   local _callback = function(state, job)
     local help_options
-    if Utils.SUCCEED_STATE == state then
+    if state == Utils.SUCCEED_STATE then
       local output_lines = job:result()
       help_options = HelpOptionsParser.parse(output_lines)
     end

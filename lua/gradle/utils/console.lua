@@ -1,4 +1,5 @@
 local Job = require('plenary.job')
+local GradleConfig = require('gradle.config')
 local Utils = require('gradle.utils')
 local uv = vim.loop
 
@@ -9,19 +10,33 @@ local _win
 local _buf_name = 'gradle://GradleConsole'
 local _jobs = {} ---@type Job[]
 
+local line_patterns = {
+  { pattern = '^BUILD FAILED', hl = 'DiagnosticError', col_start = 0, col_end = 12 },
+  { pattern = '^FAILURE:', hl = 'DiagnosticError', col_start = 0, col_end = 8 },
+  { pattern = '^BUILD SUCCESSFUL', hl = 'DiagnosticOk', col_start = 0, col_end = 16 },
+  { pattern = '^>> Executing', hl = 'DiagnosticOk', col_start = 0, col_end = 14 },
+}
+
+local function highlight_buf_line(buf, line, line_number)
+  for _, item in ipairs(line_patterns) do
+    if string.find(line, item.pattern) then
+      vim.api.nvim_buf_add_highlight(buf, 0, item.hl, line_number, item.col_start, item.col_end)
+    end
+  end
+end
+
+local function set_buf_modifiable(value)
+  vim.api.nvim_set_option_value('modifiable', value, { buf = _buf })
+  vim.api.nvim_set_option_value('readonly', not value, { buf = _buf })
+end
+
 ---Append a new line to the console
 ---@param line string
----@param buf number
----@param win number
-local append = function(line, buf, win)
-  vim.schedule(function()
-    local buf_info = vim.fn.getbufinfo(buf)
-    if buf_info[1] ~= nil then
-      local last_line = buf_info[1].linecount
-      vim.fn.appendbufline(buf, last_line, line)
-      pcall(vim.api.nvim_win_set_cursor, win, { last_line + 1, 0 })
-    end
-  end)
+local append_line = function(line)
+  local last_line = vim.api.nvim_buf_line_count(_buf)
+  vim.fn.appendbufline(_buf, last_line - 1, line)
+  highlight_buf_line(_buf, line, last_line - 1)
+  pcall(vim.api.nvim_win_set_cursor, _win, { last_line, 0 })
 end
 
 local function setup_buffer()
@@ -29,13 +44,15 @@ local function setup_buffer()
     _win = vim.fn.win_getid(vim.fn.winnr('#'))
   end
   vim.api.nvim_set_current_win(_win)
-  if _buf and not vim.api.nvim_buf_is_loaded(_buf) then
-    vim.api.nvim_buf_delete(_buf, { force = true, unload = false })
-  elseif _buf then
-    vim.api.nvim_set_current_buf(_buf)
-    return --nothing to do
+  if _buf and vim.api.nvim_buf_is_valid(_buf) then
+    if not vim.api.nvim_buf_is_loaded(_buf) then
+      vim.api.nvim_buf_delete(_buf, { force = true, unload = false })
+    else
+      vim.api.nvim_set_current_buf(_buf)
+      return --nothing to do
+    end
   end
-  _buf = vim.api.nvim_create_buf(true, false)
+  _buf = vim.api.nvim_create_buf(true, true)
   vim.api.nvim_buf_set_name(_buf, _buf_name)
   vim.api.nvim_set_option_value('buftype', 'nofile', { buf = _buf })
   vim.api.nvim_set_option_value('swapfile', false, { buf = _buf })
@@ -85,19 +102,28 @@ function M.execute_command(command, args, show_output, callback)
     args = args,
     on_stdout = function(_, data)
       if show_output and _buf then
-        append(data, _buf, _win)
+        vim.schedule(function()
+          append_line(data)
+        end)
       end
     end,
     on_stderr = function(_, data)
       if show_output and _buf then
-        append(data, _buf, _win)
+        vim.schedule(function()
+          append_line(data)
+        end)
       end
     end,
     on_start = function()
       if show_output then
         vim.schedule(function()
-          local message = 'Executing: ' .. command .. ' ' .. table.concat(args, ' ')
-          vim.api.nvim_buf_set_lines(_buf, 0, -1, false, { message })
+          set_buf_modifiable(true)
+          if GradleConfig.options.console.clean_before_execution then
+            vim.api.nvim_buf_set_lines(_buf, 0, -1, false, {})
+          end
+          local message = '>> Executing: ' .. command .. ' ' .. table.concat(args, ' ')
+          append_line(message)
+          append_line('')
         end)
       end
       if callback then
@@ -106,6 +132,12 @@ function M.execute_command(command, args, show_output, callback)
     end,
     on_exit = function()
       if show_output then
+        vim.schedule(function()
+          if not GradleConfig.options.console.clean_before_execution then
+            append_line('')
+          end
+          set_buf_modifiable(false)
+        end)
         dequeue_job()
       end
     end,
