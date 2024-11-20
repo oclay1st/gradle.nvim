@@ -36,7 +36,7 @@ local node_type_props = {
     pending_state_msg = ' ..pending ',
   },
   dependency_configuration = { icon = icons.default.tool_folder },
-  sub_projects = { icon = icons.default.tool_folder },
+  modules = { icon = icons.default.tool_folder },
   project = { icon = icons.default.project },
 }
 
@@ -60,19 +60,19 @@ function ProjectView.new(projects)
   }, ProjectView)
 end
 
----@private Lookup for a project inside a list of projects and sub-projects (modules)
+---@private Lookup for a project inside a list of projects and modules
 ---@param id string
 ---@return Project
 function ProjectView:_lookup_project(id)
   local project ---@type Project
 
-  ---@param projects Project
+  ---@param projects Project[]
   local function _lookup(projects)
     for _, item in ipairs(projects) do
       if item.id == id then
         project = item
       end
-      _lookup(item.sub_projects)
+      _lookup(item.modules)
     end
   end
   _lookup(self.projects)
@@ -236,22 +236,22 @@ function ProjectView:_create_project_node(project)
     project_id = project.id,
   })
 
-  local sub_projects_nodes = {}
-  for _, module in ipairs(project.sub_projects) do
-    local sub_project_node = self:_create_project_node(module)
-    table.insert(sub_projects_nodes, sub_project_node)
+  local modules_nodes = {}
+  for _, module in ipairs(project.modules) do
+    local module_node = self:_create_project_node(module)
+    table.insert(modules_nodes, module_node)
   end
 
-  local sub_projects_node = NuiTree.Node({
+  local modules_node = NuiTree.Node({
     text = 'Modules',
-    type = 'sub_projects',
+    type = 'modules',
     project_id = project.id,
-  }, sub_projects_nodes)
+  }, modules_nodes)
 
   local project_nodes = { tasks_node }
 
-  if #sub_projects_nodes > 0 then
-    table.insert(project_nodes, sub_projects_node)
+  if #modules_nodes > 0 then
+    table.insert(project_nodes, modules_node)
   end
 
   if project.build_gradle_path then -- if not build gradle is probably a root project

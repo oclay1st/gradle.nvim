@@ -20,6 +20,19 @@ local scanned_path_list ---@type string[]
 
 local custom_commands ---@type string[]
 
+---Sort all projects and modules
+---@param projects Project[]
+local function sort_projects(projects)
+  table.sort(projects, function(a, b)
+    return a.name < b.name
+  end)
+  for _, project in ipairs(projects) do
+    if #project.modules ~= 0 then
+      sort_projects(project.modules)
+    end
+  end
+end
+
 local create_custom_commands = function()
   local _commands = {}
   for index, command in ipairs(GradleConfig.options.custom_commands) do
@@ -46,16 +59,16 @@ local function create_project_from_settings_file(settings_gradle_path)
   local setting = SettingsParser.parse_file(settings_gradle_file:absolute())
   local project = Project.new(project_path, setting.project_name, nil, settings_gradle_path)
   project:set_commands(custom_commands)
-  for _, sub_project_name in ipairs(setting.sub_projects_names) do
+  for _, module_name in ipairs(setting.module_names) do
     local build_gradle_name = 'build.gradle'
     if string.match(settings_gradle_path, '%.kts$') then
       build_gradle_name = build_gradle_name .. '.kts'
     end
-    local build_gradle = Path:new(project_path, sub_project_name, build_gradle_name) ---@type Path
+    local build_gradle = Path:new(project_path, module_name, build_gradle_name) ---@type Path
     local build_gradle_path = build_gradle:absolute()
     if build_gradle:exists() and not vim.tbl_contains(scanned_path_list, build_gradle_path) then
-      local sub_project = create_project_from_build_file(build_gradle_path)
-      project:add_sub_project(sub_project)
+      local module = create_project_from_build_file(build_gradle_path)
+      project:add_module(module)
       table.insert(scanned_path_list, build_gradle_path)
     end
   end
@@ -108,6 +121,7 @@ M.scan_projects = function(base_path, callback)
       end
     end,
     on_exit = function()
+      sort_projects(projects)
       callback(projects)
     end,
   })

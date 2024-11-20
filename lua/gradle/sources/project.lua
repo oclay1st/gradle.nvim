@@ -9,7 +9,7 @@ local Utils = require('gradle.utils')
 ---@field tasks Project.Task[]
 ---@field dependencies Project.Dependency[]
 ---@field commands Project.Command[]
----@field sub_projects Project[]
+---@field modules Project[]
 local Project = {}
 Project.__index = Project
 
@@ -21,7 +21,7 @@ Project.__index = Project
 ---@param tasks? Project.Task[]
 ---@param dependencies? Project.Dependency[]
 ---@param commands? Project.Command[]
----@param sub_projects? Project.Command[]
+---@param modules? Project[]
 ---@return Project
 function Project.new(
   root_path,
@@ -31,7 +31,7 @@ function Project.new(
   tasks,
   dependencies,
   commands,
-  sub_projects
+  modules
 )
   return setmetatable({
     id = Utils.uuid(),
@@ -42,7 +42,7 @@ function Project.new(
     tasks = tasks or {},
     dependencies = dependencies or {},
     commands = commands or {},
-    sub_projects = sub_projects or {},
+    modules = modules or {},
   }, Project)
 end
 
@@ -66,8 +66,8 @@ end
 
 ---Add sub project
 ---@param project Project
-function Project:add_sub_project(project)
-  table.insert(self.sub_projects, project)
+function Project:add_module(project)
+  table.insert(self.modules, project)
 end
 
 ---@class Project.Command
