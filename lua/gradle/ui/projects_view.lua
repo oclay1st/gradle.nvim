@@ -250,16 +250,16 @@ function ProjectView:_create_project_node(project)
 
   local project_nodes = { tasks_node }
 
-  if #modules_nodes > 0 then
-    table.insert(project_nodes, modules_node)
+  if #command_nodes > 0 then
+    table.insert(project_nodes, 1, commands_node)
   end
 
   if project.build_gradle_path then -- if not build gradle is probably a root project
     table.insert(project_nodes, dependencies_node)
   end
 
-  if #command_nodes > 0 then
-    table.insert(project_nodes, 1, commands_node)
+  if #modules_nodes > 0 then
+    table.insert(project_nodes, modules_node)
   end
 
   return NuiTree.Node({

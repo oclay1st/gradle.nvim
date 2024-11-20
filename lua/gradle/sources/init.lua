@@ -24,7 +24,7 @@ local custom_commands ---@type string[]
 ---@param projects Project[]
 local function sort_projects(projects)
   table.sort(projects, function(a, b)
-    return a.name < b.name
+    return string.lower(a.name) < string.lower(b.name)
   end)
   for _, project in ipairs(projects) do
     if #project.modules ~= 0 then
@@ -114,6 +114,7 @@ M.scan_projects = function(base_path, callback)
           elseif not project.settings_gradle_path then
             local settings_project = create_project_from_settings_file(gradle_file_path)
             project.name = settings_project.name
+            project.modules = settings_project.modules
           end
           project.settings_gradle_path = gradle_file_path
         end
