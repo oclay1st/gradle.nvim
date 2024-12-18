@@ -373,13 +373,24 @@ end
 ---@private Setup key maps
 function ProjectView:_setup_win_maps()
   self._win:map('n', 'g', function()
-    vim.ui.select(GradleConfig.options.gradle_default_args, {
+    --[[ vim.ui.select(GradleConfig.options.gradle_default_args, {
       format_item = function(item)
-        return item.arg .. '=' .. item.value .. ' Enabled: ' .. item.enabled
+        local line = NuiLine()
+        line:append(item.arg, highlights.SPECIAL_TEXT)
+        line:append(item.value, highlights.SPECIAL_TEXT)
+        line:append('Enabled: ', highlights.SPECIAL_TEXT)
+        line:append(tostring(item.enabled), highlights.SPECIAL_TEXT)
+        print(line)
+        return item.arg .. '=' .. item.value .. ' Enabled: ' .. tostring(item.enabled)
       end,
     }, function(choice)
-      print(choice)
-    end)
+      if choice.enabled then
+        choice.enabled = false
+      else
+        choice.enabled = true
+      end
+    end) ]]
+    require('gradle').show_argument_view()
   end)
   self._win:map('n', { '<esc>', 'q' }, function()
     self:hide()
