@@ -373,7 +373,11 @@ end
 ---@private Setup key maps
 function ProjectView:_setup_win_maps()
   self._win:map('n', 'g', function()
-    vim.ui.select(GradleConfig.options.gradle_default_args, {}, function(choice)
+    vim.ui.select(GradleConfig.options.gradle_default_args, {
+      format_item = function(item)
+        return item.arg .. '=' .. item.value .. ' Enabled: ' .. item.enabled
+      end,
+    }, function(choice)
       print(choice)
     end)
   end)
