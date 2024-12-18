@@ -340,6 +340,7 @@ function ProjectView:_render_menu_header_line()
   line:append('<e>' .. separator, highlights.NORMAL_TEXT)
   line:append(icons.default.entry .. '' .. icons.default.help .. ' Help', highlights.SPECIAL_TEXT)
   line:append('<?>' .. separator, highlights.NORMAL_TEXT)
+  line:append('<g>' .. separator, highlights.NORMAL_TEXT)
   self._menu_header_line = line
   self._menu_header_line:render(self._win.bufnr, GradleConfig.namespace, 1)
 end
@@ -371,6 +372,11 @@ end
 
 ---@private Setup key maps
 function ProjectView:_setup_win_maps()
+  self._win:map('n', 'g', function()
+    vim.ui.select(GradleConfig.options.gradle_default_args, {}, function()
+      print(GradleConfig.options.gradle_default_args)
+    end)
+  end)
   self._win:map('n', { '<esc>', 'q' }, function()
     self:hide()
   end)
