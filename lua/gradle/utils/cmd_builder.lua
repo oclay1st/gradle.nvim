@@ -19,9 +19,14 @@ CommandBuilder.build_gradle_cmd = function(project_path, extra_args)
   for _, value in ipairs(extra_args) do
     table.insert(_args, value)
   end
-  for _, value in ipairs(GradleConfig.options.gradle_default_args) do
-    if value.enabled == true then
-      table.insert(_args, value.arg .. '=' .. value.value)
+  for i = 1, #GradleConfig.options.gradle_default_args do
+    if GradleConfig.options.gradle_default_args[i].enabled == true then
+      table.insert(
+        _args,
+        GradleConfig.options.gradle_default_args[i].arg
+          .. '='
+          .. GradleConfig.options.gradle_default_args[i].value
+      )
     end
   end
   return {
