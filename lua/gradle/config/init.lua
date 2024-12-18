@@ -57,6 +57,7 @@ local defaultOptions = {
     clean_before_execution = true,
   },
   gradle_executable = 'gradle',
+  gradle_default_args = {},
   custom_commands = {},
   project_scanner_depth = 5,
 }
