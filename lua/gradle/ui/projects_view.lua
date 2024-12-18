@@ -373,8 +373,8 @@ end
 ---@private Setup key maps
 function ProjectView:_setup_win_maps()
   self._win:map('n', 'g', function()
-    vim.ui.select(GradleConfig.options.gradle_default_args, {}, function()
-      print(GradleConfig.options.gradle_default_args)
+    vim.ui.select(GradleConfig.options.gradle_default_args, {}, function(choice)
+      print(choice)
     end)
   end)
   self._win:map('n', { '<esc>', 'q' }, function()
