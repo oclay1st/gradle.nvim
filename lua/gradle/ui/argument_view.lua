@@ -75,7 +75,7 @@ end
 
 ---@private Create the options tree list
 function ArgumentView:_create_options_tree_list()
-  if not self._options_tree then
+  if not self._options_tree or self._options_tree.bufnr ~= self._options_component.bufnr then
     self._options_tree = Tree({
       ns_id = GradleConfig.namespace,
       bufnr = self._options_component.bufnr,
