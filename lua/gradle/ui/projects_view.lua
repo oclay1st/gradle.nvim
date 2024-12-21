@@ -340,6 +340,10 @@ function ProjectView:_render_menu_header_line()
   line:append('<e>' .. separator, highlights.NORMAL_TEXT)
   line:append(icons.default.entry .. '' .. icons.default.help .. ' Help', highlights.SPECIAL_TEXT)
   line:append('<?>' .. separator, highlights.NORMAL_TEXT)
+  line:append(
+    icons.default.entry .. '' .. icons.default.command .. ' Arguments',
+    highlights.SPECIAL_TEXT
+  )
   line:append('<g>' .. separator, highlights.NORMAL_TEXT)
   self._menu_header_line = line
   self._menu_header_line:render(self._win.bufnr, GradleConfig.namespace, 1)
@@ -373,23 +377,6 @@ end
 ---@private Setup key maps
 function ProjectView:_setup_win_maps()
   self._win:map('n', 'g', function()
-    --[[ vim.ui.select(GradleConfig.options.gradle_default_args, {
-      format_item = function(item)
-        local line = NuiLine()
-        line:append(item.arg, highlights.SPECIAL_TEXT)
-        line:append(item.value, highlights.SPECIAL_TEXT)
-        line:append('Enabled: ', highlights.SPECIAL_TEXT)
-        line:append(tostring(item.enabled), highlights.SPECIAL_TEXT)
-        print(line)
-        return item.arg .. '=' .. item.value .. ' Enabled: ' .. tostring(item.enabled)
-      end,
-    }, function(choice)
-      if choice.enabled then
-        choice.enabled = false
-      else
-        choice.enabled = true
-      end
-    end) ]]
     require('gradle').show_argument_view()
   end)
   self._win:map('n', { '<esc>', 'q' }, function()
