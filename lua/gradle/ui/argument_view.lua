@@ -46,7 +46,7 @@ function ArgumentView.new()
       },
     },
     _prev_win = vim.api.nvim_get_current_win(),
-    _input_prompt = Text(icons.default.command .. '  Default Gradle Arguments ', 'SpecialChar'),
+    _input_prompt = Text(icons.default.command .. '  Search >> ', 'SpecialChar'),
   }, ArgumentView)
 end
 
@@ -54,8 +54,8 @@ local function create_option_node(option)
   return Tree.Node({
     arg = option.arg,
     value = option.value,
+    enabled = option.enabled,
     text = option.arg .. '=' .. option.value,
-    description = 'Enabled: ' .. tostring(option.enabled),
   })
 end
 
@@ -86,10 +86,17 @@ function ArgumentView:_create_options_tree_list()
           line:append(node.text, highlights.SPECIAL_TEXT)
           return line
         end
-        line:append(icons.default.gradle, 'SpecialChar')
+        if node.enabled then
+          line:append(icons.default.gradle, 'SpecialChar')
+        else
+          line:append(icons.default.gradle, highlights.ERROR_TEXT)
+        end
+
         line:append(' ' .. node.text)
-        if node.description then
-          line:append(' (' .. node.description .. ')', highlights.DIM_TEXT)
+        if node.enabled then
+          line:append(' (Enabled)', highlights.DIM_TEXT)
+        else
+          line:append(' (Disabled)', highlights.DIM_TEXT)
         end
         return line
       end,
@@ -147,7 +154,7 @@ function ArgumentView:_create_input_component()
     border = {
       style = { '╭', '─', '╮', '│', '│', '─', '│', '│' },
       text = {
-        top = ' Set default command arguments ',
+        top = 'Select Default Gradle Arguments ',
         top_align = 'center',
       },
     },
