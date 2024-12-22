@@ -9,8 +9,10 @@ local highlights = require('gradle.config.highlights')
 local GradleConfig = require('gradle.config')
 
 ---@class Option
----@field name string
----@field description string
+---@field arg string
+---@field value string
+---@field enabled string
+---@field text string
 
 local options = {} ---@type Option[]
 
