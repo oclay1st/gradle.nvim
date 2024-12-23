@@ -63,7 +63,7 @@ end
 
 ---@private Load options nodes
 function ArgumentView:_load_options_nodes()
-  options = GradleConfig.options.gradle_default_args
+  options = GradleConfig.options.default_arguments
   local options_nodes = {}
   for _, option in ipairs(options) do
     local node = create_option_node(option)
@@ -198,15 +198,15 @@ function ArgumentView:_create_options_component()
       return
     end
     vim.schedule(function()
-      for i = 1, #GradleConfig.options.gradle_default_args do
+      for i = 1, #GradleConfig.options.default_arguments do
         if
-          GradleConfig.options.gradle_default_args[i].arg == current_node.arg
-          and GradleConfig.options.gradle_default_args[i].value == current_node.value
+          GradleConfig.options.default_arguments[i].arg == current_node.arg
+          and GradleConfig.options.default_arguments[i].value == current_node.value
         then
-          if GradleConfig.options.gradle_default_args[i].enabled then
-            GradleConfig.options.gradle_default_args[i].enabled = false
+          if GradleConfig.options.default_arguments[i].enabled then
+            GradleConfig.options.default_arguments[i].enabled = false
           else
-            GradleConfig.options.gradle_default_args[i].enabled = true
+            GradleConfig.options.default_arguments[i].enabled = true
           end
         end
       end

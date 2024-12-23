@@ -69,7 +69,7 @@ This plugin is under **Development**.
     clean_before_execution = true
   },
   gradle_executable = "gradle", -- Example: gradle, ./gradlew or a path to Gradle executable
-  gradle_default_args = {--[[
+  default_arguments = {--[[
   A list of arguments
   Example:
   {
