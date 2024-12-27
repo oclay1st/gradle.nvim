@@ -9,6 +9,7 @@ local help_keys = {
   { key = 'c', desc = 'Create a new project' },
   { key = 'e', desc = 'Execute command' },
   { key = 'a', desc = '[Projects] analyze dependencies' },
+  { key = 'g', desc = 'Select default gradle arguments' },
   { key = '/, s', desc = '[Dependencies] search' },
   { key = '<Ctrl>s', desc = '[Dependencies] switch window' },
   { key = '<Esc>, q', desc = 'Close' },

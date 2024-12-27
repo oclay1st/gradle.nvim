@@ -12,6 +12,7 @@
 </div>
 
 ## 🔥 Status
+
 This plugin is under **Development**.
 
 ## ✨ Features
@@ -68,6 +69,15 @@ This plugin is under **Development**.
     clean_before_execution = true
   },
   gradle_executable = "gradle", -- Example: gradle, ./gradlew or a path to Gradle executable
+  default_arguments = {--[[
+  A list of arguments
+  Example:
+  {
+   enabled = flase, --if the argument should be neabled by default
+   arg="-Dorg.gradle.java.home", -- the arguemnt
+   value=".jdks/openjdk-11" -- the value of the arg
+  }
+  ]]}
   custom_commands = {
     -- Example: 
     -- {

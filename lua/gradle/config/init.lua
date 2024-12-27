@@ -17,6 +17,11 @@ M.namespace = vim.api.nvim_create_namespace('gradle')
 ---@field description string
 ---@field cmd_args string[]
 
+---@class DefaultArguments
+---@field enabled boolean
+---@field arg string
+---@field value string
+
 ---@class ConsoleView
 ---@field show_task_execution boolean
 ---@field show_command_execution boolean
@@ -32,7 +37,8 @@ M.namespace = vim.api.nvim_create_namespace('gradle')
 ---@class GradleOptions
 ---@field projects_view? ProjectsView
 ---@field console ConsoleView
----@field gradle_executable string the name or path of mvn
+---@field gradle_executable string the name or path of gradle
+---@field default_arguments DefaultArguments[]
 ---@field project_scanner_depth number
 ---@field custom_commands CustomCommand[]
 ---@field workspaces Workspace[]
@@ -57,6 +63,7 @@ local defaultOptions = {
     clean_before_execution = true,
   },
   gradle_executable = 'gradle',
+  default_arguments = {},
   custom_commands = {},
   project_scanner_depth = 5,
 }

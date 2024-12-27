@@ -4,13 +4,14 @@ local Sources = require('gradle.sources')
 local ProjectView = require('gradle.ui.projects_view')
 local ExecuteView = require('gradle.ui.execute_view')
 local InitializerView = require('gradle.ui.initializer_view')
+local ArgumentView = require('gradle.ui.argument_view')
 
 local M = {}
 
 local projects_view -- @type ProjectView
 local execute_view -- @type ExecuteView
 local initializer_view -- @type InitializerView
-
+local argument_view
 ---Setup the plugin
 
 ---Setup the plugin
@@ -60,5 +61,10 @@ M.show_initializer_view = function()
   end
   initializer_view:mount()
 end
-
+M.show_argument_view = function()
+  if not argument_view then
+    argument_view = ArgumentView.new()
+  end
+  argument_view:mount()
+end
 return M
