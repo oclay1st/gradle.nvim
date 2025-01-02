@@ -48,7 +48,7 @@ function ArgumentView.new()
       },
     },
     _prev_win = vim.api.nvim_get_current_win(),
-    _input_prompt = Text(icons.default.command .. '  Search >> ', 'SpecialChar'),
+    _input_prompt = Text(icons.default.command .. '  Search >> ', highlights.SPECIAL),
   }, ArgumentView)
 end
 
@@ -85,20 +85,20 @@ function ArgumentView:_create_options_tree_list()
         local line = Line()
         line:append(' ')
         if node.type == 'loading' then
-          line:append(node.text, highlights.SPECIAL_TEXT)
+          line:append(node.text, highlights.SPECIAL)
           return line
         end
         if node.enabled then
-          line:append(icons.default.gradle, 'SpecialChar')
+          line:append(icons.default.gradle, highlights.SPECIAL)
         else
-          line:append(icons.default.gradle, highlights.ERROR_TEXT)
+          line:append(icons.default.gradle, highlights.ERROR)
         end
 
         line:append(' ' .. node.text)
         if node.enabled then
-          line:append(' (Enabled)', highlights.DIM_TEXT)
+          line:append(' (Enabled)', highlights.COMMENT)
         else
-          line:append(' (Disabled)', highlights.DIM_TEXT)
+          line:append(' (Disabled)', highlights.COMMENT)
         end
         return line
       end,

@@ -49,7 +49,7 @@ function ExecuteView.new()
       },
     },
     _prev_win = vim.api.nvim_get_current_win(),
-    _input_prompt = Text(icons.default.command .. '  gradle ', 'SpecialChar'),
+    _input_prompt = Text(icons.default.command .. '  gradle ', highlights.SPECIAL),
   }, ExecuteView)
 end
 
@@ -61,6 +61,8 @@ end
 
 ---@private Load options nodes
 function ExecuteView:_load_options_nodes()
+  self._options_tree:add_node(Tree.Node({ text = '...Loading options', type = 'loading' }))
+  self._options_tree:render()
   Sources.load_help_options(function(state, help_options)
     vim.schedule(function()
       if state == Utils.SUCCEED_STATE then
@@ -89,19 +91,17 @@ function ExecuteView:_create_options_tree_list()
       local line = Line()
       line:append(' ')
       if node.type == 'loading' then
-        line:append(node.text, highlights.SPECIAL_TEXT)
+        line:append(node.text, highlights.SPECIAL)
         return line
       end
-      line:append(icons.default.gradle, 'SpecialChar')
+      line:append(icons.default.gradle, highlights.SPECIAL)
       line:append(' ' .. node.text)
       if node.description then
-        line:append(' (' .. node.description .. ')', highlights.DIM_TEXT)
+        line:append(' (' .. node.description .. ')', highlights.COMMENT)
       end
       return line
     end,
   })
-  self._options_tree:add_node(Tree.Node({ text = '...Loading options', type = 'loading' }))
-  self._options_tree:render()
   self:_load_options_nodes()
 end
 

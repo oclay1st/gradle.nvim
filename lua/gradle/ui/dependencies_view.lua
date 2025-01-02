@@ -142,7 +142,7 @@ function DependenciesView:_toggle_filter()
     else
       self._dependencies_win.border:set_text(
         'bottom',
-        Text(' Filtered by: "' .. self._filter_value .. '" ', highlights.DIM_TEXT),
+        Text(' Filtered by: "' .. self._filter_value .. '" ', highlights.COMMENT),
         'left'
       )
     end
@@ -163,11 +163,11 @@ function DependenciesView:_create_dependencies_tree()
       local line = Line()
       line:append(' ')
       local icon = node.has_conflict and icons.default.warning or icons.default.package
-      local icon_highlight = node.has_conflict and 'DiagnosticWarn' or 'SpecialChar'
+      local icon_highlight = node.has_conflict and highlights.WARN or highlights.SPECIAL
       line:append(icon .. ' ', icon_highlight)
       line:append(node.text)
       if node.configuration then
-        line:append(' (' .. node.configuration .. ')', highlights.DIM_TEXT)
+        line:append(' (' .. node.configuration .. ')', highlights.COMMENT)
       end
       return line
     end,
@@ -237,27 +237,27 @@ function DependenciesView:_create_dependency_usages_tree()
       local line = Line()
       line:append(' ' .. string.rep('  ', node:get_depth() - 1))
       if node:has_children() then
-        line:append(node:is_expanded() and ' ' or ' ', 'SpecialChar')
+        line:append(node:is_expanded() and ' ' or ' ', highlights.SPECIAL)
       else
         line:append('  ')
       end
       local icon = icons.default.package
-      local icon_highlight = 'SpecialChar'
+      local icon_highlight = highlights.SPECIAL
       if node.has_conflict and not node:has_children() then
-        icon_highlight = 'DiagnosticWarn'
+        icon_highlight = highlights.WARN
         icon = icons.default.warning
       end
       line:append(icon .. ' ', icon_highlight)
       if node.is_duplicate and not node:has_children() then
-        line:append(node.text, highlights.DIM_TEXT)
+        line:append(node.text, highlights.COMMENT)
       else
         line:append(node.text)
       end
       if node.configuration then
-        line:append(' (' .. node.configuration .. ')', highlights.DIM_TEXT)
+        line:append(' (' .. node.configuration .. ')', highlights.COMMENT)
       end
       if node.conflict_version and not node:has_children() then
-        line:append(' conflict with ' .. node.conflict_version, highlights.ERROR_TEXT)
+        line:append(' conflict with ' .. node.conflict_version, highlights.ERROR)
       end
       return line
     end,
@@ -306,7 +306,7 @@ function DependenciesView:_create_dependency_filter()
       },
     },
   }, {
-    prompt = Text(icons.default.search .. '  ', 'SpecialChar'),
+    prompt = Text(icons.default.search .. '  ', highlights.SPECIAL),
     on_change = function(value)
       self:_on_filter_change(value, dependencies_nodes)
     end,

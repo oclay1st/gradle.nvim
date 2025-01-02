@@ -289,7 +289,7 @@ function InitializerView:_create_directory_component()
     prepare_node = function(node)
       local line = Line()
       line:append(' ' .. node.text)
-      line:append(' ' .. node.path, highlights.DIM_TEXT)
+      line:append(' ' .. node.path, highlights.COMMENT)
       return line
     end,
   })

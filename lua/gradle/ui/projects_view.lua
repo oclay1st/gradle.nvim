@@ -281,23 +281,23 @@ function ProjectView:_render_projects_tree()
       line:append(' ' .. string.rep('  ', node:get_depth() - 1))
 
       if node:has_children() or node.is_loaded == false then
-        line:append(node:is_expanded() and ' ' or ' ', 'SpecialChar')
+        line:append(node:is_expanded() and ' ' or ' ', highlights.SPECIAL)
       else
         line:append('  ')
       end
-      line:append(props.icon .. ' ', 'SpecialChar')
+      line:append(props.icon .. ' ', highlights.SPECIAL)
       if node.type == 'dependency' and node.is_duplicate and not node:has_children() then
-        line:append(node.text, highlights.DIM_TEXT)
+        line:append(node.text, highlights.COMMENT)
       else
         line:append(node.text)
       end
-      if node.state == Utils.STARTED_STATE then
-        line:append(props.started_state_msg, 'DiagnosticVirtualTextInfo')
-      elseif node.state == Utils.PENDING_STATE then
-        line:append(props.pending_state_msg, 'DiagnosticVirtualTextWarn')
-      end
       if node.description then
-        line:append(' (' .. node.description .. ')', highlights.DIM_TEXT)
+        line:append(' (' .. node.description .. ')', highlights.COMMENT)
+      end
+      if node.state == Utils.STARTED_STATE then
+        line:append(props.started_state_msg, highlights.INFO)
+      elseif node.state == Utils.PENDING_STATE then
+        line:append(props.pending_state_msg, highlights.WARN)
       end
       return line
     end,
@@ -322,29 +322,21 @@ end
 function ProjectView:_render_menu_header_line()
   local line = NuiLine()
   local separator = ' '
-  line:append(' ' .. icons.default.gradle .. ' Gradle ' .. separator, highlights.SPECIAL_TEXT)
-  line:append(
-    icons.default.entry .. '' .. icons.default.command .. ' Create',
-    highlights.SPECIAL_TEXT
-  )
-  line:append('<c>' .. separator, highlights.NORMAL_TEXT)
-  line:append(
-    icons.default.entry .. '' .. icons.default.tree .. ' Analyze',
-    highlights.SPECIAL_TEXT
-  )
-  line:append('<a>' .. separator, highlights.NORMAL_TEXT)
-  line:append(
-    icons.default.entry .. '' .. icons.default.command .. ' Execute',
-    highlights.SPECIAL_TEXT
-  )
-  line:append('<e>' .. separator, highlights.NORMAL_TEXT)
-  line:append(icons.default.entry .. '' .. icons.default.help .. ' Help', highlights.SPECIAL_TEXT)
-  line:append('<?>' .. separator, highlights.NORMAL_TEXT)
-  line:append(
-    icons.default.entry .. '' .. icons.default.command .. ' Arguments',
-    highlights.SPECIAL_TEXT
-  )
-  line:append('<g>' .. separator, highlights.NORMAL_TEXT)
+  line:append(icons.default.entry .. icons.default.command, highlights.SPECIAL)
+  line:append(' Create')
+  line:append('<c>' .. separator, highlights.COMMENT)
+  line:append(icons.default.entry .. icons.default.tree, highlights.SPECIAL)
+  line:append(' Analyze')
+  line:append('<a>' .. separator, highlights.COMMENT)
+  line:append(icons.default.entry .. icons.default.command, highlights.SPECIAL)
+  line:append(' Execute')
+  line:append('<e>' .. separator, highlights.COMMENT)
+  line:append(icons.default.entry .. icons.default.command, highlights.SPECIAL)
+  line:append(' Args')
+  line:append('<g>' .. separator, highlights.COMMENT)
+  line:append(icons.default.entry .. icons.default.help, highlights.SPECIAL)
+  line:append(' Help')
+  line:append('<?>' .. separator, highlights.COMMENT)
   self._menu_header_line = line
   self._menu_header_line:render(self._win.bufnr, GradleConfig.namespace, 1)
 end
@@ -359,9 +351,9 @@ end
 ---@private Create the projects header line
 function ProjectView:_create_projects_line()
   local line = NuiLine()
-  line:append(' Projects:', highlights.DIM_TEXT)
+  line:append(icons.default.gradle .. ' Gradle Projects:', highlights.COMMENT)
   if #self.projects == 0 then
-    line:append(' (Projects not found, create a new one!) ', highlights.DIM_TEXT)
+    line:append(' (Projects not found, create a new one!) ', highlights.COMMENT)
   end
   return line
 end
@@ -369,8 +361,8 @@ end
 ---@private Create the projects scanning line
 function ProjectView:_create_projects_scanning_line()
   local line = NuiLine()
-  line:append(' Projects:', highlights.DIM_TEXT)
-  line:append(' ...scanning directory ', highlights.DIM_TEXT)
+  line:append(' Projects:', highlights.COMMENT)
+  line:append(' ...scanning directory ', highlights.COMMENT)
   return line
 end
 

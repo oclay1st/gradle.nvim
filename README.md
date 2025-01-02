@@ -89,3 +89,21 @@ This plugin is under **Development**.
   project_scanner_depth = 5
 }
 ```
+
+## 🎨 Highlight Groups
+
+<!-- colors:start -->
+
+| Highlight Group | Default Group | Description |
+| --- | --- | --- |
+| **GraldeNormal** | ***Normal*** | Normal text |
+| **GraldeNormalNC** | ***NormalNC*** | Normal text on non current window |
+| **GraldeCursorLine** | ***CursorLine*** | Cursor line text |
+| **GraldeSpecial** | ***Special*** | Special text |
+| **GraldeComment** | ***Comment*** | Comment text |
+| **GraldeTitle** | ***Title*** | Title text |
+| **GraldeError** | ***DiagnosticError*** | Error text |
+| **GraldeWarn** | ***DiagnosticWarn*** | Warning text |
+| **GraldeInfo** | ***DiagnosticInfo*** | Info text |
+
+<!-- colors:end -->

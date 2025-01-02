@@ -9,7 +9,8 @@ local help_keys = {
   { key = 'c', desc = 'Create a new project' },
   { key = 'e', desc = 'Execute command' },
   { key = 'a', desc = '[Projects] analyze dependencies' },
-  { key = 'g', desc = 'Select default gradle arguments' },
+  { key = 'g', desc = 'Set default arguments' },
+  { key = '<Ctrl-r>', desc = '[Projects] reload' },
   { key = '/, s', desc = '[Dependencies] search' },
   { key = '<Ctrl>s', desc = '[Dependencies] switch window' },
   { key = '<Esc>, q', desc = 'Close' },
@@ -53,14 +54,14 @@ M.mount = function()
     popup:unmount()
   end)
   local keys_header = NuiLine()
-  keys_header:append(string.format(' %14s', 'KEY(S)'), highlights.SPECIAL_TITLE)
-  keys_header:append('    ', highlights.DIM_TEXT)
-  keys_header:append('COMMAND', highlights.SPECIAL_TITLE)
+  keys_header:append(string.format(' %14s', 'KEY(S)'), highlights.TITLE)
+  keys_header:append('    ', highlights.COMMENT)
+  keys_header:append('COMMAND', highlights.TITLE)
   keys_header:render(popup.bufnr, GradleConfig.namespace, 2)
   for index, value in pairs(help_keys) do
     local line = NuiLine()
-    line:append(string.format(' %14s', value.key), highlights.SPECIAL_TEXT)
-    line:append(' -> ', highlights.DIM_TEXT)
+    line:append(string.format(' %14s', value.key), highlights.SPECIAL)
+    line:append(' -> ', highlights.COMMENT)
     line:append(value.desc)
     line:render(popup.bufnr, GradleConfig.namespace, index + 2)
   end
