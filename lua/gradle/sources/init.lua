@@ -35,7 +35,7 @@ end
 
 local create_custom_commands = function()
   local _commands = {}
-  for index, command in ipairs(GradleConfig.options.custom_commands) do
+  for index, command in ipairs(GradleConfig.options.projects_view.custom_commands) do
     _commands[index] = Project.Command(command.name, command.description, command.cmd_args)
   end
   return _commands

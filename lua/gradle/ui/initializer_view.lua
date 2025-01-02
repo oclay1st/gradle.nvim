@@ -67,7 +67,12 @@ function InitializerView:_create_project_name_component()
   self._project_name_component = Input(
     vim.tbl_deep_extend('force', self._default_opts, {
       enter = true,
-      border = { text = { top = ' Create Gradle Project - Name 1/6 ' } },
+      border = {
+        text = { top = ' Create Gradle Project - Name 1/6 ' },
+        style = GradleConfig.options.initializer_view.project_name_win.border.style,
+        padding = GradleConfig.options.initializer_view.project_name_win.border.padding
+          or { 0, 0, 0, 0 },
+      },
     }),
     {
       prompt = '> ',
@@ -103,10 +108,15 @@ function InitializerView:_create_project_package_component()
     vim.tbl_deep_extend('force', self._default_opts, {
       enter = true,
       size = { height = 1 },
-      border = { text = { top = ' Create Gradle Project - Package 2/6 ' } },
+      border = {
+        text = { top = ' Create Gradle Project - Package 2/6 ' },
+        style = GradleConfig.options.initializer_view.project_package_win.border.style,
+        padding = GradleConfig.options.initializer_view.project_package_win.border.padding
+          or { 0, 0, 0, 0 },
+      },
     }),
     {
-      default_value = GradleConfig.options.initializer_view.default_package or '',
+      default_value = GradleConfig.options.initializer_view.project_package_win.default_value or '',
       prompt = '> ',
       on_change = function(value)
         self._project_package = value
@@ -190,7 +200,11 @@ function InitializerView:_create_dsl_component()
     enter = true,
     size = { height = 2 },
     win_options = { cursorline = true },
-    border = { text = { top = ' Create Gradle Project - DSL 4/6 ' } },
+    border = {
+      text = { top = ' Create Gradle Project - DSL 4/6 ' },
+      style = GradleConfig.options.initializer_view.dsl_win.border.style,
+      padding = GradleConfig.options.initializer_view.dsl_win.border.padding or { 0, 0, 0, 0 },
+    },
   }))
   local options_tree = Tree({
     ns_id = GradleConfig.namespace,
@@ -235,7 +249,12 @@ function InitializerView:_create_test_framework_component()
     enter = true,
     size = { height = 3 },
     win_options = { cursorline = true },
-    border = { text = { top = '  Create Gradle Project - Test Framework 5/6 ' } },
+    border = {
+      text = { top = '  Create Gradle Project - Test Framework 5/6 ' },
+      style = GradleConfig.options.initializer_view.test_framework_win.border.style,
+      padding = GradleConfig.options.initializer_view.test_framework_win.border.padding
+        or { 0, 0, 0, 0 },
+    },
   }))
   local options_tree = Tree({
     ns_id = GradleConfig.namespace,
@@ -279,9 +298,14 @@ end
 function InitializerView:_create_directory_component()
   self._directory_component = Popup(vim.tbl_deep_extend('force', self._default_opts, {
     enter = true,
-    size = { height = #GradleConfig.options.initializer_view.workspaces },
-    win_options = { cursorline = true },
-    border = { text = { top = ' Create Gradle Project - Directory 6/6 ' } },
+    size = { height = #GradleConfig.options.initializer_view.workspaces_win.options },
+    win_options = { cursorline = true, winhighlight = highlights.DEFAULT_WIN_HIGHLIGHT },
+    border = {
+      text = { top = ' Create Gradle Project - Directory 6/6 ' },
+      style = GradleConfig.options.initializer_view.workspaces_win.border.style,
+      padding = GradleConfig.options.initializer_view.workspaces_win.border.padding
+        or { 0, 0, 0, 0 },
+    },
   }))
   local options_tree = Tree({
     ns_id = GradleConfig.namespace,
@@ -294,7 +318,7 @@ function InitializerView:_create_directory_component()
     end,
   })
   local nodes = {}
-  for _, workspace in ipairs(GradleConfig.options.initializer_view.workspaces) do
+  for _, workspace in ipairs(GradleConfig.options.initializer_view.workspaces_win.options) do
     table.insert(nodes, Tree.Node({ text = workspace.name, path = workspace.path }))
   end
   options_tree:set_nodes(nodes)

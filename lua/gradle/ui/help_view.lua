@@ -33,16 +33,14 @@ M.mount = function()
       wrap = false,
     },
     border = {
-      style = 'rounded',
       text = {
         top = ' Gradle Help? ',
         top_align = 'center',
       },
+      style = GradleConfig.options.help_view.border.style,
+      padding = GradleConfig.options.help_view.border.padding or { 0, 0, 0, 0 },
     },
-    size = {
-      width = '80%',
-      height = '20%',
-    },
+    size = GradleConfig.options.help_view.size,
   })
 
   popup:mount()

@@ -45,6 +45,7 @@ function DependenciesView.new(project_name, dependencies)
         relativenumber = false,
         spell = false,
         list = false,
+        winhighlight = highlights.DEFAULT_WIN_HIGHLIGHT,
       },
       border = {
         style = 'rounded',
@@ -95,9 +96,10 @@ function DependenciesView:_create_dependencies_win()
   local dependencies_win_opts = vim.tbl_deep_extend('force', self._default_opts, {
     enter = true,
     border = {
-      text = {
-        top = ' Resolved Dependencies (' .. self.project_name .. ') ',
-      },
+      text = { top = ' Resolved Dependencies (' .. self.project_name .. ') ' },
+      style = GradleConfig.options.dependencies_view.resolved_dependencies_win.border.style,
+      padding = GradleConfig.options.dependencies_view.resolved_dependencies_win.border.padding
+        or { 0, 0, 0, 0 },
     },
   })
   self._dependencies_win = Popup(dependencies_win_opts)
@@ -204,7 +206,12 @@ end
 ---@private Create dependency usages window
 function DependenciesView:_create_dependency_usages_win()
   local dependency_usages_win_opts = vim.tbl_deep_extend('force', self._default_opts, {
-    border = { text = { top = ' Dependency Usages ' } },
+    border = {
+      text = { top = ' Dependency Usages ' },
+      style = GradleConfig.options.dependencies_view.dependency_usages_win.border.style,
+      padding = GradleConfig.options.dependencies_view.dependency_usages_win.border.padding
+        or { 0, 0, 0, 0 },
+    },
   })
   self._dependency_usages_win = Popup(dependency_usages_win_opts)
   self:_create_dependency_usages_tree()
@@ -299,11 +306,12 @@ function DependenciesView:_create_dependency_filter()
     },
     zindex = 60,
     border = {
-      style = 'rounded',
       text = {
         top = 'Filter',
         top_align = 'center',
       },
+      style = GradleConfig.options.dependencies_view.filter_win.border.style,
+      padding = GradleConfig.options.dependencies_view.filter_win.border.padding or { 0, 0, 0, 0 },
     },
   }, {
     prompt = Text(GradleConfig.options.icons.search .. '  ', highlights.SPECIAL),
@@ -329,10 +337,7 @@ function DependenciesView:_create_layout()
       ns_id = GradleConfig.namespace,
       relative = 'editor',
       position = '50%',
-      size = {
-        width = '60%',
-        height = '80%',
-      },
+      size = GradleConfig.options.dependencies_view.size,
     },
     Layout.Box({
       Layout.Box(self._dependencies_win, { size = '50%' }),

@@ -2,14 +2,14 @@ local highlights = require('gradle.config.highlights')
 local GradleConfig = require('gradle.config')
 local Sources = require('gradle.sources')
 local ProjectView = require('gradle.ui.projects_view')
-local ExecuteView = require('gradle.ui.execute_view')
+local ExecutionView = require('gradle.ui.execution_view')
 local InitializerView = require('gradle.ui.initializer_view')
 local ArgumentView = require('gradle.ui.argument_view')
 
 local M = {}
 
 local projects_view -- @type ProjectView
-local execute_view -- @type ExecuteView
+local execution_view -- @type ExecuteView
 local initializer_view -- @type InitializerView
 local argument_view
 ---Setup the plugin
@@ -48,11 +48,11 @@ M.refresh = function()
   load_projects_view()
 end
 
-M.show_execute_view = function()
-  if not execute_view then
-    execute_view = ExecuteView.new()
+M.show_execution_view = function()
+  if not execution_view then
+    execution_view = ExecutionView.new()
   end
-  execute_view:mount()
+  execution_view:mount()
 end
 
 M.show_initializer_view = function()

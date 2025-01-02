@@ -16,7 +16,7 @@ local Console = require('gradle.utils.console')
 
 local options = {} ---@type Option[]
 
----@class ExecuteView
+---@class ExecutionView
 ---@field private _input_component NuiInput
 ---@field private _options_component NuiPopup
 ---@field private _options_tree NuiTree
@@ -24,11 +24,11 @@ local options = {} ---@type Option[]
 ---@field private _default_opts table
 ---@field private _layout NuiLayout
 ---@field private _input_prompt NuiText
-local ExecuteView = {}
-ExecuteView.__index = ExecuteView
+local ExecutionView = {}
+ExecutionView.__index = ExecutionView
 
----@return ExecuteView
-function ExecuteView.new()
+---@return ExecutionView
+function ExecutionView.new()
   return setmetatable({
     _default_opts = {
       ns_id = GradleConfig.namespace,
@@ -49,7 +49,7 @@ function ExecuteView.new()
     },
     _prev_win = vim.api.nvim_get_current_win(),
     _input_prompt = Text(GradleConfig.options.icons.command .. '  gradle ', highlights.SPECIAL),
-  }, ExecuteView)
+  }, ExecutionView)
 end
 
 ---Create a option node
@@ -59,7 +59,7 @@ local function create_option_node(option)
 end
 
 ---@private Load options nodes
-function ExecuteView:_load_options_nodes()
+function ExecutionView:_load_options_nodes()
   self._options_tree:add_node(Tree.Node({ text = '...Loading options', type = 'loading' }))
   self._options_tree:render()
   Sources.load_help_options(function(state, help_options)
@@ -82,7 +82,7 @@ function ExecuteView:_load_options_nodes()
 end
 
 ---@private Create the options tree list
-function ExecuteView:_create_options_tree_list()
+function ExecutionView:_create_options_tree_list()
   self._options_tree = Tree({
     ns_id = GradleConfig.namespace,
     bufnr = self._options_component.bufnr,
@@ -106,7 +106,7 @@ end
 
 ---@private On input change handler
 ---@param query string
-function ExecuteView:_on_input_change(query)
+function ExecutionView:_on_input_change(query)
   local current_node = self._options_tree:get_node()
   if query == '' and current_node and current_node.type == 'loading' then
     return
@@ -131,7 +131,7 @@ function ExecuteView:_on_input_change(query)
 end
 
 ---@private Create the input component
-function ExecuteView:_create_input_component()
+function ExecutionView:_create_input_component()
   self._input_component = Input({
     enter = true,
     ns_id = GradleConfig.namespace,
@@ -146,11 +146,9 @@ function ExecuteView:_create_input_component()
     },
     zindex = 60,
     border = {
-      style = { '╭', '─', '╮', '│', '│', '─', '│', '│' },
-      text = {
-        top = ' Execute Gradle Command ',
-        top_align = 'center',
-      },
+      text = { top = ' Execute Gradle Command ', top_align = 'center' },
+      style = GradleConfig.options.execution_view.input_win.border.style,
+      padding = GradleConfig.options.execution_view.input_win.border.padding or { 0, 0, 0, 0 },
     },
   }, {
     prompt = self._input_prompt,
@@ -186,11 +184,12 @@ function ExecuteView:_create_input_component()
 end
 
 ---@private Create the options component
-function ExecuteView:_create_options_component()
+function ExecutionView:_create_options_component()
   self._options_component = Popup(vim.tbl_deep_extend('force', self._default_opts, {
-    win_options = { cursorline = true },
+    win_options = { cursorline = true, winhighlight = highlights.DEFAULT_WIN_HIGHLIGHT },
     border = {
-      style = { '', '', '', '│', '╯', '─', '╰', '│' },
+      style = GradleConfig.options.execution_view.options_win.border.style,
+      padding = GradleConfig.options.execution_view.options_win.border.padding or { 0, 0, 0, 0 },
     },
   }))
   self:_create_options_tree_list()
@@ -224,16 +223,13 @@ function ExecuteView:_create_options_component()
 end
 
 ---@private Crete the layout
-function ExecuteView:_create_layout()
+function ExecutionView:_create_layout()
   self._layout = Layout(
     {
       ns_id = GradleConfig.namespace,
       relative = 'editor',
       position = '50%',
-      size = {
-        width = '40%',
-        height = '60%',
-      },
+      size = GradleConfig.options.execution_view.size,
     },
     Layout.Box({
       Layout.Box(self._input_component, { size = { height = 1, width = '100%' } }),
@@ -258,7 +254,7 @@ function ExecuteView:_create_layout()
 end
 
 ---Mount the window view
-function ExecuteView:mount()
+function ExecutionView:mount()
   -- crete the list of options
   self:_create_options_component()
   -- create the input component
@@ -267,4 +263,4 @@ function ExecuteView:mount()
   self:_create_layout()
 end
 
-return ExecuteView
+return ExecutionView

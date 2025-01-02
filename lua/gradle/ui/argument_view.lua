@@ -47,7 +47,7 @@ function ArgumentView.new()
       },
     },
     _prev_win = vim.api.nvim_get_current_win(),
-    _input_prompt = Text(GradleConfig.options.icons.search .. '  Search >> ', highlights.SPECIAL),
+    _input_prompt = Text(GradleConfig.options.icons.search .. ' Search ', highlights.SPECIAL),
   }, ArgumentView)
 end
 
@@ -62,15 +62,13 @@ end
 
 ---@private Load options nodes
 function ArgumentView:_load_options_nodes()
-  options = GradleConfig.options.default_arguments
+  options = GradleConfig.options.default_arguments_view.arguments
   local options_nodes = {}
   for _, option in ipairs(options) do
     local node = create_option_node(option)
     table.insert(options_nodes, node)
   end
-
   self._options_tree:set_nodes(options_nodes)
-
   self._options_tree:render()
 end
 
@@ -153,11 +151,13 @@ function ArgumentView:_create_input_component()
     },
     zindex = 60,
     border = {
-      style = { '╭', '─', '╮', '│', '│', '─', '│', '│' },
       text = {
-        top = ' Select Default Gradle Arguments ',
+        top = ' Set Default Gradle Arguments ',
         top_align = 'center',
       },
+      style = GradleConfig.options.default_arguments_view.input_win.border.style,
+      padding = GradleConfig.options.default_arguments_view.input_win.border.padding
+        or { 0, 0, 0, 0 },
     },
   }, {
     prompt = self._input_prompt,
@@ -184,9 +184,11 @@ end
 ---@private Create the options component
 function ArgumentView:_create_options_component()
   self._options_component = Popup(vim.tbl_deep_extend('force', self._default_opts, {
-    win_options = { cursorline = true },
+    win_options = { cursorline = true, winhighlight = highlights.DEFAULT_WIN_HIGHLIGHT },
     border = {
-      style = { '', '', '', '│', '╯', '─', '╰', '│' },
+      style = GradleConfig.options.default_arguments_view.options_win.border.style,
+      padding = GradleConfig.options.default_arguments_view.options_win.border.padding
+        or { 0, 0, 0, 0 },
     },
   }))
   self:_create_options_tree_list()
@@ -197,15 +199,15 @@ function ArgumentView:_create_options_component()
       return
     end
     vim.schedule(function()
-      for i = 1, #GradleConfig.options.default_arguments do
+      for i = 1, #GradleConfig.options.default_arguments_view.arguments do
         if
-          GradleConfig.options.default_arguments[i].arg == current_node.arg
-          and GradleConfig.options.default_arguments[i].value == current_node.value
+          GradleConfig.options.default_arguments_view.arguments[i].arg == current_node.arg
+          and GradleConfig.options.default_arguments_view.arguments[i].value == current_node.value
         then
-          if GradleConfig.options.default_arguments[i].enabled then
-            GradleConfig.options.default_arguments[i].enabled = false
+          if GradleConfig.options.default_arguments_view.arguments[i].enabled then
+            GradleConfig.options.default_arguments_view.arguments[i].enabled = false
           else
-            GradleConfig.options.default_arguments[i].enabled = true
+            GradleConfig.options.default_arguments_view.arguments[i].enabled = true
           end
         end
       end
@@ -229,10 +231,7 @@ function ArgumentView:_create_layout()
       ns_id = GradleConfig.namespace,
       relative = 'editor',
       position = '50%',
-      size = {
-        width = '40%',
-        height = '60%',
-      },
+      size = GradleConfig.options.default_arguments_view.size,
     },
     Layout.Box({
       Layout.Box(self._input_component, { size = { height = 1, width = '100%' } }),

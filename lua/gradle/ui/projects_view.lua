@@ -394,7 +394,7 @@ function ProjectView:_setup_win_maps()
   end)
 
   self._win:map('n', 'e', function()
-    require('gradle').show_execute_view()
+    require('gradle').show_execution_view()
   end)
 
   self._win:map('n', 'a', function()
