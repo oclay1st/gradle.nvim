@@ -193,14 +193,14 @@ This plugin is under **Development**.
 
 | Highlight Group | Default Group | Description |
 | --- | --- | --- |
-| **GraldeNormal** | ***Normal*** | Normal text |
-| **GraldeNormalNC** | ***NormalNC*** | Normal text on non current window |
-| **GraldeCursorLine** | ***CursorLine*** | Cursor line text |
-| **GraldeSpecial** | ***Special*** | Special text |
-| **GraldeComment** | ***Comment*** | Comment text |
-| **GraldeTitle** | ***Title*** | Title text |
-| **GraldeError** | ***DiagnosticError*** | Error text |
-| **GraldeWarn** | ***DiagnosticWarn*** | Warning text |
-| **GraldeInfo** | ***DiagnosticInfo*** | Info text |
+| **GradleNormal** | ***Normal*** | Normal text |
+| **GradleNormalNC** | ***NormalNC*** | Normal text on non current window |
+| **GradleCursorLine** | ***CursorLine*** | Cursor line text |
+| **GradleSpecial** | ***Special*** | Special text |
+| **GradleComment** | ***Comment*** | Comment text |
+| **GradleTitle** | ***Title*** | Title text |
+| **GradleError** | ***DiagnosticError*** | Error text |
+| **GradleWarn** | ***DiagnosticWarn*** | Warning text |
+| **GradleInfo** | ***DiagnosticInfo*** | Info text |
 
 <!-- colors:end -->
