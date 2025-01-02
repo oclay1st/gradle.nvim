@@ -4,7 +4,6 @@ local Tree = require('nui.tree')
 local Line = require('nui.line')
 local Text = require('nui.text')
 local Popup = require('nui.popup')
-local icons = require('gradle.ui.icons')
 local highlights = require('gradle.config.highlights')
 local GradleConfig = require('gradle.config')
 
@@ -48,7 +47,7 @@ function ArgumentView.new()
       },
     },
     _prev_win = vim.api.nvim_get_current_win(),
-    _input_prompt = Text(icons.default.command .. '  Search >> ', highlights.SPECIAL),
+    _input_prompt = Text(GradleConfig.options.icons.search .. '  Search >> ', highlights.SPECIAL),
   }, ArgumentView)
 end
 
@@ -89,9 +88,9 @@ function ArgumentView:_create_options_tree_list()
           return line
         end
         if node.enabled then
-          line:append(icons.default.gradle, highlights.SPECIAL)
+          line:append(GradleConfig.options.icons.gradle, highlights.SPECIAL)
         else
-          line:append(icons.default.gradle, highlights.ERROR)
+          line:append(GradleConfig.options.icons.gradle, highlights.ERROR)
         end
 
         line:append(' ' .. node.text)
@@ -156,7 +155,7 @@ function ArgumentView:_create_input_component()
     border = {
       style = { '╭', '─', '╮', '│', '│', '─', '│', '│' },
       text = {
-        top = 'Select Default Gradle Arguments ',
+        top = ' Select Default Gradle Arguments ',
         top_align = 'center',
       },
     },

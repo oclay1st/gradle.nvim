@@ -7,7 +7,7 @@ local GradleConfig = require('gradle.config')
 ---@class CommandBuilder
 local CommandBuilder = {}
 
----Build the mvn cmd
+---Build the gradle cmd
 ---@param project_path string
 ---@param extra_args string[]
 ---@return Command

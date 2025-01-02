@@ -9,35 +9,34 @@ local CommandBuilder = require('gradle.utils.cmd_builder')
 local Console = require('gradle.utils.console')
 local GradleConfig = require('gradle.config')
 local highlights = require('gradle.config.highlights')
-local icons = require('gradle.ui.icons')
 
 local node_type_props = {
   command = {
-    icon = icons.default.command,
+    icon = GradleConfig.options.icons.command,
     started_state_msg = ' ..running ',
     pending_state_msg = ' ..pending ',
   },
-  commands = { icon = icons.default.tool_folder },
+  commands = { icon = GradleConfig.options.icons.tool_folder },
   task = {
-    icon = icons.default.tool,
+    icon = GradleConfig.options.icons.tool,
     started_state_msg = ' ..running ',
     pending_state_msg = ' ..pending ',
   },
   tasks = {
-    icon = icons.default.tool_folder,
+    icon = GradleConfig.options.icons.tool_folder,
     started_state_msg = ' ..loading ',
     pending_state_msg = ' ..pending ',
   },
-  task_group = { icon = icons.default.tool_folder },
-  dependency = { icon = icons.default.package },
+  task_group = { icon = GradleConfig.options.icons.tool_folder },
+  dependency = { icon = GradleConfig.options.icons.package },
   dependencies = {
-    icon = icons.default.tool_folder,
+    icon = GradleConfig.options.icons.tool_folder,
     started_state_msg = ' ..loading ',
     pending_state_msg = ' ..pending ',
   },
-  dependency_configuration = { icon = icons.default.tool_folder },
-  modules = { icon = icons.default.tool_folder },
-  project = { icon = icons.default.project },
+  dependency_configuration = { icon = GradleConfig.options.icons.tool_folder },
+  modules = { icon = GradleConfig.options.icons.tool_folder },
+  project = { icon = GradleConfig.options.icons.project },
 }
 
 ---@class ProjectView
@@ -322,19 +321,34 @@ end
 function ProjectView:_render_menu_header_line()
   local line = NuiLine()
   local separator = ' '
-  line:append(icons.default.entry .. icons.default.command, highlights.SPECIAL)
+  line:append(
+    GradleConfig.options.icons.entry .. GradleConfig.options.icons.command,
+    highlights.SPECIAL
+  )
   line:append(' Create')
   line:append('<c>' .. separator, highlights.COMMENT)
-  line:append(icons.default.entry .. icons.default.tree, highlights.SPECIAL)
+  line:append(
+    GradleConfig.options.icons.entry .. GradleConfig.options.icons.tree,
+    highlights.SPECIAL
+  )
   line:append(' Analyze')
   line:append('<a>' .. separator, highlights.COMMENT)
-  line:append(icons.default.entry .. icons.default.command, highlights.SPECIAL)
+  line:append(
+    GradleConfig.options.icons.entry .. GradleConfig.options.icons.command,
+    highlights.SPECIAL
+  )
   line:append(' Execute')
   line:append('<e>' .. separator, highlights.COMMENT)
-  line:append(icons.default.entry .. icons.default.command, highlights.SPECIAL)
+  line:append(
+    GradleConfig.options.icons.entry .. GradleConfig.options.icons.command,
+    highlights.SPECIAL
+  )
   line:append(' Args')
   line:append('<g>' .. separator, highlights.COMMENT)
-  line:append(icons.default.entry .. icons.default.help, highlights.SPECIAL)
+  line:append(
+    GradleConfig.options.icons.entry .. GradleConfig.options.icons.help,
+    highlights.SPECIAL
+  )
   line:append(' Help')
   line:append('<?>' .. separator, highlights.COMMENT)
   self._menu_header_line = line
@@ -351,7 +365,7 @@ end
 ---@private Create the projects header line
 function ProjectView:_create_projects_line()
   local line = NuiLine()
-  line:append(icons.default.gradle .. ' Gradle Projects:', highlights.COMMENT)
+  line:append(GradleConfig.options.icons.gradle .. ' Gradle Projects:', highlights.COMMENT)
   if #self.projects == 0 then
     line:append(' (Projects not found, create a new one!) ', highlights.COMMENT)
   end

@@ -1,4 +1,3 @@
-local Path = require('plenary.path')
 ---@class GradleConfig
 local M = {}
 
@@ -54,6 +53,10 @@ local defaultOptions = {
       { name = 'CURRENT_DIR', path = vim.fn.getcwd() },
     },
   },
+  gradle_executable = 'gradle',
+  default_arguments = {},
+  custom_commands = {},
+  project_scanner_depth = 5,
   console = {
     show_command_execution = true,
     show_task_execution = true,
@@ -62,10 +65,24 @@ local defaultOptions = {
     show_project_create_execution = false,
     clean_before_execution = true,
   },
-  gradle_executable = 'gradle',
-  default_arguments = {},
-  custom_commands = {},
-  project_scanner_depth = 5,
+  icons = {
+    package = '',
+    new_folder = '',
+    tree = '󰙅',
+    expanded = ' ',
+    collapsed = ' ',
+    gradle = '',
+    project = '',
+    tool_folder = '',
+    tool = '',
+    command = '',
+    help = '󰘥',
+    package_dependents = '',
+    package_dependencies = '',
+    warning = '',
+    entry = ' ',
+    search = '',
+  },
 }
 
 ---@type GradleOptions

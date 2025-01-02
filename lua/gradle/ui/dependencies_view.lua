@@ -7,7 +7,6 @@ local Layout = require('nui.layout')
 local event = require('nui.utils.autocmd').event
 local highlights = require('gradle.config.highlights')
 local GradleConfig = require('gradle.config')
-local icons = require('gradle.ui.icons')
 
 ---@class DependenciesView
 ---@field private _dependencies_win NuiPopup
@@ -162,7 +161,8 @@ function DependenciesView:_create_dependencies_tree()
     prepare_node = function(node)
       local line = Line()
       line:append(' ')
-      local icon = node.has_conflict and icons.default.warning or icons.default.package
+      local icon = node.has_conflict and GradleConfig.options.icons.warning
+        or GradleConfig.options.icons.package
       local icon_highlight = node.has_conflict and highlights.WARN or highlights.SPECIAL
       line:append(icon .. ' ', icon_highlight)
       line:append(node.text)
@@ -241,11 +241,11 @@ function DependenciesView:_create_dependency_usages_tree()
       else
         line:append('  ')
       end
-      local icon = icons.default.package
+      local icon = GradleConfig.options.icons.package
       local icon_highlight = highlights.SPECIAL
       if node.has_conflict and not node:has_children() then
         icon_highlight = highlights.WARN
-        icon = icons.default.warning
+        icon = GradleConfig.options.icons.warning
       end
       line:append(icon .. ' ', icon_highlight)
       if node.is_duplicate and not node:has_children() then
@@ -306,7 +306,7 @@ function DependenciesView:_create_dependency_filter()
       },
     },
   }, {
-    prompt = Text(icons.default.search .. '  ', highlights.SPECIAL),
+    prompt = Text(GradleConfig.options.icons.search .. '  ', highlights.SPECIAL),
     on_change = function(value)
       self:_on_filter_change(value, dependencies_nodes)
     end,
