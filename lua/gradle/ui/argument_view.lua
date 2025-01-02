@@ -220,7 +220,9 @@ function ArgumentView:_create_options_component()
   end)
   self._options_component:map('n', { '<esc>', 'q' }, function()
     self._layout:unmount()
-    vim.api.nvim_set_current_win(self._prev_win)
+    if vim.api.nvim_win_is_valid(self._prev_win) then
+      vim.api.nvim_set_current_win(self._prev_win)
+    end
   end)
 end
 
