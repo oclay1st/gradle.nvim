@@ -62,8 +62,8 @@ end
 local function create_tree_node(dependency)
   return Tree.Node({
     id = dependency.id,
-    text = dependency.name .. ':' .. dependency.version,
-    name = dependency.group .. ':' .. dependency.name,
+    text = dependency.version and dependency.name .. ':' .. dependency.version or dependency.name,
+    name = dependency.group and dependency.group .. ':' .. dependency.name or dependency.name,
     configuration = dependency.configuration,
     is_duplicate = dependency.is_duplicate,
     has_conflict = dependency.conflict_version and true or false,
@@ -78,7 +78,8 @@ local function filter_dependencies(name, indexed_dependencies)
   local filtered_dependencies = {}
   local filtered = {}
   for _, dependency in pairs(indexed_dependencies) do
-    if name == dependency.group .. ':' .. dependency.name then
+    local _name = dependency.group and dependency.group .. ':' .. dependency.name or dependency.name
+    if name == _name then
       local pos_to_insert = #filtered_dependencies + 1
       local id = dependency.id
       while id ~= nil and filtered[id] == nil do
@@ -181,18 +182,18 @@ end
 function DependenciesView:_create_dependencies_tree_nodes()
   local nodes_indexes = {}
   for _, dependency in ipairs(self.dependencies) do
-    local name = dependency.group .. ':' .. dependency.name
-    if nodes_indexes[name] == nil then
+    local _name = dependency.group and dependency.group .. ':' .. dependency.name or dependency.name
+    if nodes_indexes[_name] == nil then
       local node = create_tree_node(dependency)
-      nodes_indexes[name] = node
+      nodes_indexes[_name] = node
     else
-      nodes_indexes[name].configuration = 'multiple scopes'
+      nodes_indexes[_name].configuration = 'multiple scopes'
     end
     if dependency.conflict_version then
-      nodes_indexes[name].has_conflict = true
+      nodes_indexes[_name].has_conflict = true
     end
     if dependency.is_duplicate then
-      nodes_indexes[name].is_duplicate = true
+      nodes_indexes[_name].is_duplicate = true
     end
   end
   local nodes = vim.tbl_values(nodes_indexes)

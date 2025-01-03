@@ -177,7 +177,7 @@ local defaultOptions = {
   },
   icons = {
     package = '',
-    new_folder = '',
+    new = '',
     tree = '󰙅',
     expanded = ' ',
     collapsed = ' ',
@@ -192,6 +192,7 @@ local defaultOptions = {
     warning = '',
     entry = ' ',
     search = '',
+    argument = '',
   },
 }
 

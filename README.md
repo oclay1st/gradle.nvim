@@ -168,7 +168,7 @@ This plugin is under **Development**.
   },
   icons = {
     package = '',
-    new_folder = '',
+    new = '',
     tree = '󰙅',
     expanded = ' ',
     collapsed = ' ',
@@ -183,6 +183,7 @@ This plugin is under **Development**.
     warning = '',
     entry = ' ',
     search = '',
+    argument = '',
   },
 }
 ```

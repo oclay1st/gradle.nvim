@@ -94,11 +94,12 @@ end
 ---@class Project.Dependency
 ---@field id string
 ---@field parent_id string | nil
----@field group string
----@field name string
----@field version string
 ---@field configuration string
----@field is_duplicate boolean
+---@field type string {module, project}
+---@field name string
+---@field group? string
+---@field version? string
+---@field is_duplicate? boolean
 ---@field conflict_version? string
 local Dependency = {}
 Dependency.__index = Dependency
@@ -107,25 +108,31 @@ Dependency.__index = Dependency
 
 ---@return string
 function Dependency:get_compact_name()
-  return self.group .. ':' .. self.name .. ':' .. self.version
+  local values = { self.group, self.name, self.version }
+  local items = vim.tbl_filter(function(item)
+    return item and item ~= ''
+  end, values)
+  return table.concat(items, ':')
 end
 
 ---@param id string
 ---@param parent_id string | nil
----@param group string
----@param name string
----@param version string
 ---@param configuration string
+---@param type string {module, project}
+---@param name string
+---@param group? string
+---@param version? string
 ---@param is_duplicate? boolean
 ---@param conflict_version? string
 ---@return Project.Dependency
 function Project.Dependency(
   id,
   parent_id,
-  group,
-  name,
-  version,
   configuration,
+  type,
+  name,
+  group,
+  version,
   is_duplicate,
   conflict_version
 )
@@ -133,10 +140,11 @@ function Project.Dependency(
   setmetatable(self, Dependency)
   self.id = id
   self.parent_id = parent_id
-  self.group = group
-  self.name = name
-  self.version = version or ''
   self.configuration = configuration
+  self.name = name
+  self.type = type
+  self.group = group
+  self.version = version
   self.is_duplicate = is_duplicate or false
   self.conflict_version = conflict_version
   return self

@@ -28,7 +28,8 @@ local node_type_props = {
     pending_state_msg = ' ..pending ',
   },
   task_group = { icon = GradleConfig.options.icons.tool_folder },
-  dependency = { icon = GradleConfig.options.icons.package },
+  module_dependency = { icon = GradleConfig.options.icons.package },
+  project_dependency = { icon = GradleConfig.options.icons.gradle },
   dependencies = {
     icon = GradleConfig.options.icons.tool_folder,
     started_state_msg = ' ..loading ',
@@ -168,7 +169,7 @@ function ProjectView:_load_dependencies_nodes(node, project, on_success)
             local dependency_node = NuiTree.Node({
               id = dependency.id,
               text = dependency:get_compact_name(),
-              type = 'dependency',
+              type = dependency.type .. '_dependency',
               project_id = project.id,
               is_duplicate = dependency.is_duplicate,
             })
@@ -285,7 +286,7 @@ function ProjectView:_render_projects_tree()
         line:append('  ')
       end
       line:append(props.icon .. ' ', highlights.SPECIAL)
-      if node.type == 'dependency' and node.is_duplicate and not node:has_children() then
+      if node.is_duplicate and not node:has_children() then
         line:append(node.text, highlights.COMMENT)
       else
         line:append(node.text)
@@ -322,7 +323,7 @@ function ProjectView:_render_menu_header_line()
   local line = NuiLine()
   local separator = ' '
   line:append(
-    GradleConfig.options.icons.entry .. GradleConfig.options.icons.command,
+    GradleConfig.options.icons.entry .. GradleConfig.options.icons.new,
     highlights.SPECIAL
   )
   line:append(' Create')
@@ -340,7 +341,7 @@ function ProjectView:_render_menu_header_line()
   line:append(' Execute')
   line:append('<e>' .. separator, highlights.COMMENT)
   line:append(
-    GradleConfig.options.icons.entry .. GradleConfig.options.icons.command,
+    GradleConfig.options.icons.entry .. GradleConfig.options.icons.argument,
     highlights.SPECIAL
   )
   line:append(' Args')
@@ -384,7 +385,7 @@ end
 function ProjectView:_setup_win_maps()
   self._win:map('n', 'g', function()
     require('gradle').show_argument_view()
-  end)
+  end, { noremap = true })
   self._win:map('n', { '<esc>', 'q' }, function()
     self:hide()
   end)
