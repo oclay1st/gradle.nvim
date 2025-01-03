@@ -6,15 +6,25 @@ local DependencyTreeParser = {}
 
 DependencyTreeParser.__index = DependencyTreeParser
 
----Parse the dependency text
----@param text string
----Example: org.hibernate.validator:hibernate-validator:8.0.1.Final
 ---@param id string
 ---@param parent_id string | nil
 ---@param configuration string
 ---@return Project.Dependency
-local parse_dependency = function(text, id, parent_id, configuration)
+local parse_dependency_type_project = function(text, id, parent_id, configuration)
+  local name = string.match(text, '%:(%S*)')
+  local is_duplicate = text:find('%(%*%)') ~= nil
+  return Project.Dependency(id, parent_id, configuration, 'project', name, nil, nil, is_duplicate)
+end
+
+---@param id string
+---@param parent_id string | nil
+---@param configuration string
+---@return Project.Dependency
+local parse_dependency_type_module = function(text, id, parent_id, configuration)
   local group, name, extra = text:match('(.-):(.-)[%s%:](.*)')
+  assert(group, 'Failed to parse the dependency group from : ' .. text)
+  assert(name, 'Failed to parse the dependency name from : ' .. text)
+  assert(extra, 'Failed to parse the dependency extra from : ' .. text)
   local version = extra:match('>%s(.+)')
   local comment
   if not version then
@@ -25,13 +35,28 @@ local parse_dependency = function(text, id, parent_id, configuration)
   return Project.Dependency(
     id,
     parent_id,
-    group,
-    name,
-    version,
     configuration,
+    'module',
+    name,
+    group,
+    version,
     is_duplicate,
     conflict_version
   )
+end
+
+---Parse the dependency text
+---@param text string
+---Example: org.hibernate.validator:hibernate-validator:8.0.1.Final
+---@param id string
+---@param parent_id string | nil
+---@param configuration string
+---@return Project.Dependency
+local parse_dependency = function(text, id, parent_id, configuration)
+  if string.find(text, '^project%s') then
+    return parse_dependency_type_project(text, id, parent_id, configuration)
+  end
+  return parse_dependency_type_module(text, id, parent_id, configuration)
 end
 
 ---Resolve dependencies for gradle command output
