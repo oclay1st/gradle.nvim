@@ -70,6 +70,11 @@ M.namespace = vim.api.nvim_create_namespace('gradle')
 ---@field border Border
 ---@flied size any
 
+---@class Cache
+---@field enable_tasks_cache boolean
+---@field enable_dependencies_cache boolean
+---@field enable_help_options_cache boolean
+
 ---@class GradleOptions
 ---@field projects_view ProjectsViewConfig
 ---@field initializer_view InitializerViewConfig
@@ -77,8 +82,8 @@ M.namespace = vim.api.nvim_create_namespace('gradle')
 ---@field help_view HelpViewConfig
 ---@field console ConsoleViewConfig
 ---@field gradle_executable string
----@field default_arguments DefaultArguments[]
 ---@field project_scanner_depth number
+---@field cache Cache
 local defaultOptions = {
   gradle_executable = 'gradle', -- the name or path of gradle
   project_scanner_depth = 5,
@@ -174,6 +179,11 @@ local defaultOptions = {
     show_tasks_load_execution = false,
     show_project_create_execution = false,
     clean_before_execution = true,
+  },
+  cache = {
+    enable_tasks_cache = true,
+    enable_dependencies_cache = true,
+    enable_help_options_cache = true,
   },
   icons = {
     package = '',

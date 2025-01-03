@@ -59,10 +59,12 @@ local function create_option_node(option)
 end
 
 ---@private Load options nodes
-function ExecutionView:_load_options_nodes()
+---@param force? boolean
+---@param on_success? function(options)
+function ExecutionView:_load_options_nodes(force, on_success)
   self._options_tree:add_node(Tree.Node({ text = '...Loading options', type = 'loading' }))
   self._options_tree:render()
-  Sources.load_help_options(function(state, help_options)
+  Sources.load_help_options(force, function(state, help_options)
     vim.schedule(function()
       if state == Utils.SUCCEED_STATE then
         table.sort(help_options, function(a, b)
@@ -76,6 +78,9 @@ function ExecutionView:_load_options_nodes()
         end
         self._options_tree:set_nodes(options_nodes)
         self._options_tree:render()
+        if on_success then
+          on_success(help_options)
+        end
       end
     end)
   end)
@@ -130,6 +135,12 @@ function ExecutionView:_on_input_change(query)
   end)
 end
 
+function ExecutionView:_force_options_reload()
+  self:_load_options_nodes(true, function()
+    vim.notify('Options reloaded successfully')
+  end)
+end
+
 ---@private Create the input component
 function ExecutionView:_create_input_component()
   self._input_component = Input({
@@ -181,6 +192,9 @@ function ExecutionView:_create_input_component()
       vim.api.nvim_set_current_win(self._prev_win)
     end
   end)
+  self._input_component:map('n', { '<c-r>' }, function()
+    self:_force_options_reload()
+  end)
 end
 
 ---@private Create the options component
@@ -219,6 +233,10 @@ function ExecutionView:_create_options_component()
   self._options_component:map('n', { '<esc>', 'q' }, function()
     self._layout:unmount()
     vim.api.nvim_set_current_win(self._prev_win)
+  end)
+
+  self._options_component:map('n', { '<c-r>' }, function()
+    self:_force_options_reload()
   end)
 end
 

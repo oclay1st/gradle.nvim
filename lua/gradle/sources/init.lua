@@ -3,9 +3,13 @@ local Project = require('gradle.sources.project')
 local GradleConfig = require('gradle.config')
 local Path = require('plenary.path')
 local SettingsParser = require('gradle.parsers.settings_gradle_parser')
+local ProjectsCacheParser = require('gradle.parsers.projects_cache_parser')
 local TasksParser = require('gradle.parsers.tasks_parser')
+local TasksCacheParser = require('gradle.parsers.tasks_cache_parser')
 local DependencyTreeParser = require('gradle.parsers.dependency_tree_parser')
+local DependenciesCacheParser = require('gradle.parsers.dependencies_cache_parser')
 local HelpOptionsParser = require('gradle.parsers.help_options_parser')
+local HelpOptionsCacheParser = require('gradle.parsers.help_options_cache_parser')
 local CommandBuilder = require('gradle.utils.cmd_builder')
 local Utils = require('gradle.utils')
 local Console = require('gradle.utils.console')
@@ -128,13 +132,29 @@ M.scan_projects = function(base_path, callback)
   })
 end
 
-M.load_project_tasks = function(project_path, callback)
+--- Load the project cache
+--- @param project_path string
+--- @return ProjectCache | nil
+M.load_project_cache = function(project_path)
+  local projects_cache = ProjectsCacheParser:parse()
+  for _, item in ipairs(projects_cache) do
+    if item.path == project_path then
+      return item
+    end
+  end
+end
+
+M.load_project_tasks = function(project_path, force, callback)
+  if not force and M.load_tasks_cache(project_path, callback) then
+    return
+  end
   local show_output = GradleConfig.options.console.show_tasks_load_execution
   local _callback = function(state, job)
     local tasks
     if state == Utils.SUCCEED_STATE then
       local content_lines = job:result()
       tasks = TasksParser.parse(content_lines)
+      M.create_tasks_cache(project_path, tasks)
     elseif state == Utils.FAILED_STATE then
       local error_msg = 'Error loading tasks. '
       if not show_output then
@@ -148,13 +168,44 @@ M.load_project_tasks = function(project_path, callback)
   Console.execute_command(command.cmd, command.args, show_output, _callback)
 end
 
-M.load_project_dependencies = function(project_path, callback)
+M.load_tasks_cache = function(project_path, callback)
+  if not GradleConfig.options.cache.enable_tasks_cache then
+    return false
+  end
+  local project_cache = M.load_project_cache(project_path)
+  if not project_cache then
+    return false
+  end
+  local plugins = TasksCacheParser.parse(project_cache.key)
+  if #plugins == 0 then
+    return false
+  end
+  callback(Utils.SUCCEED_STATE, plugins)
+  return true
+end
+
+--- Create tasks cache
+--- @param project_path string
+--- @param tasks Project.Task[]
+M.create_tasks_cache = function(project_path, tasks)
+  if not GradleConfig.options.cache.enable_tasks_cache then
+    return
+  end
+  local key = ProjectsCacheParser.register(project_path)
+  TasksCacheParser.dump(key, tasks)
+end
+
+M.load_project_dependencies = function(project_path, force, callback)
+  if not force and M.load_dependencies_cache(project_path, callback) then
+    return
+  end
   local show_output = GradleConfig.options.console.show_dependencies_load_execution
   local _callback = function(state, job)
     local dependencies
     if state == Utils.SUCCEED_STATE then
       local output_lines = job:result()
       dependencies = DependencyTreeParser.parse(output_lines)
+      M.create_dependencies_cache(project_path, dependencies)
     elseif state == Utils.FAILED_STATE then
       local error_msg = 'Error loading dependencies. '
       if not show_output then
@@ -168,12 +219,47 @@ M.load_project_dependencies = function(project_path, callback)
   Console.execute_command(command.cmd, command.args, show_output, _callback)
 end
 
-M.load_help_options = function(callback)
+--- Load the dependencies cache
+--- @param project_path string
+--- @param callback function
+--- @return boolean
+M.load_dependencies_cache = function(project_path, callback)
+  if not GradleConfig.options.cache.enable_dependencies_cache then
+    return false
+  end
+  local project_cache = M.load_project_cache(project_path)
+  if not project_cache then
+    return false
+  end
+  local dependencies = DependenciesCacheParser.parse(project_cache.key)
+  if #dependencies == 0 then
+    return false
+  end
+  callback(Utils.SUCCEED_STATE, dependencies)
+  return true
+end
+
+--- Create dependencies cache
+--- @param project_path string
+--- @param dependencies Project.Dependency[]
+M.create_dependencies_cache = function(project_path, dependencies)
+  if not GradleConfig.options.cache.enable_dependencies_cache then
+    return
+  end
+  local key = ProjectsCacheParser.register(project_path)
+  DependenciesCacheParser.dump(key, dependencies)
+end
+
+M.load_help_options = function(force, callback)
+  if not force and M.load_help_options_cache(callback) then
+    return
+  end
   local _callback = function(state, job)
     local help_options
     if state == Utils.SUCCEED_STATE then
       local output_lines = job:result()
       help_options = HelpOptionsParser.parse(output_lines)
+      M.create_help_options_cache(help_options)
     end
     callback(state, help_options)
   end
@@ -181,4 +267,22 @@ M.load_help_options = function(callback)
   Console.execute_command(command.cmd, command.args, false, _callback)
 end
 
+M.load_help_options_cache = function(callback)
+  if not GradleConfig.options.cache.enable_help_options_cache then
+    return false
+  end
+  local options = HelpOptionsCacheParser.parse()
+  if #options == 0 then
+    return false
+  end
+  callback(Utils.SUCCEED_STATE, options)
+  return true
+end
+
+M.create_help_options_cache = function(options)
+  if not GradleConfig.options.cache.enable_help_options_cache then
+    return
+  end
+  HelpOptionsCacheParser.dump(options)
+end
 return M

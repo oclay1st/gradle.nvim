@@ -23,6 +23,7 @@ This plugin is under **Development**.
 - Analyze dependencies usages, conflicts and duplications
 - Enqueue multiple commands executions
 - Show the output of the commands executions
+- Cache tasks, dependencies and command options
 
 ## ⚡️ Requirements
 
@@ -57,7 +58,12 @@ This plugin is under **Development**.
     show_dependencies_load_execution = false,
     show_tasks_load_execution = false,
     show_project_create_execution = false,
-    clean_before_execution = true
+    clean_before_execution = true,
+  },
+  cache = {
+    enable_dependencies_cache = true,
+    enable_plugins_cache = true,
+    enable_help_options_cache = true,
   },
   projects_view = {
     custom_commands = {
@@ -157,14 +163,6 @@ This plugin is under **Development**.
         style = { '', '', '', '│', '╯', '─', '╰', '│' },
       },
     },
-  },
-  console = {
-    show_command_execution = true,
-    show_task_execution = true,
-    show_dependencies_load_execution = false,
-    show_tasks_load_execution = false,
-    show_project_create_execution = false,
-    clean_before_execution = true,
   },
   icons = {
     package = '',

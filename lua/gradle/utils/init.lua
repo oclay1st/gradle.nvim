@@ -7,6 +7,8 @@ M.SUCCEED_STATE = 'SUCCEED'
 M.FAILED_STATE = 'FAILED'
 M.PENDING_STATE = 'PENDING'
 
+M.gradle_cache_path = Path:new(vim.fn.stdpath('cache'), 'gradle'):absolute()
+
 M.split_path = function(filepath)
   local formatted = string.format('([^%s]+)', Path.path.sep)
   local t = {}

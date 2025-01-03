@@ -110,11 +110,14 @@ end
 ---Load the tasks nodes for the tree
 ---@param node NuiTree.Node
 ---@param project Project
-function ProjectView:_load_tasks_nodes(node, project)
-  Sources.load_project_tasks(project.root_path, function(state, tasks)
+---@param force? boolean
+---@param on_success? fun()
+function ProjectView:_load_tasks_nodes(node, project, force, on_success)
+  Sources.load_project_tasks(project.root_path, force, function(state, tasks)
     vim.schedule(function()
       if state == Utils.SUCCEED_STATE then
         project:set_tasks(tasks)
+        self._tree:set_nodes({}, node:get_id())
         local group_nodes = {}
         for _, group_item in ipairs(project:group_tasks_by_group_name()) do
           local tasks_nodes = {}
@@ -140,7 +143,11 @@ function ProjectView:_load_tasks_nodes(node, project)
         end
         node.is_loaded = true
         self._tree:set_nodes(group_nodes, node._id)
-        node:expand()
+        if on_success then
+          on_success()
+        else
+          node:expand()
+        end
       end
       node.state = state
       self._tree:render()
@@ -151,12 +158,14 @@ end
 ---Load the dependency nodes for the tree
 ---@param node NuiTree.Node
 ---@param project Project
+---@param force? boolean
 ---@param on_success? fun()
-function ProjectView:_load_dependencies_nodes(node, project, on_success)
-  Sources.load_project_dependencies(project.root_path, function(state, dependencies)
+function ProjectView:_load_dependencies_nodes(node, project, force, on_success)
+  Sources.load_project_dependencies(project.root_path, force, function(state, dependencies)
     vim.schedule(function()
       if state == Utils.SUCCEED_STATE then
         project:set_dependencies(dependencies)
+        self._tree:set_nodes({}, node:get_id())
         for _, group_item in ipairs(project:group_dependencies_by_configuration()) do
           local configuration_node = NuiTree.Node({
             id = Utils.uuid(),
@@ -411,9 +420,36 @@ function ProjectView:_setup_win_maps()
       local dependency_view = DependenciesView.new(project.name, project.dependencies)
       dependency_view:mount()
     else
-      self:_load_dependencies_nodes(dependencies_node, project, function()
+      self:_load_dependencies_nodes(dependencies_node, project, false, function()
         local dependency_view = DependenciesView.new(project.name, project.dependencies)
         dependency_view:mount()
+      end)
+    end
+  end, { noremap = true, nowait = true })
+
+  self._win:map('n', { '<c-r>' }, function()
+    local node = self._tree:get_node()
+    if node == nil then
+      return
+    end
+    local project = self:_lookup_project(node.project_id)
+    if
+      node.type == 'dependencies'
+      or node.type == 'dependency_configuration'
+      or node.type == 'module_dependency'
+      or node.type == 'project_dependency'
+    then
+      local dependencies_node = self._tree:get_node('-' .. project.id .. '-dependencies')
+      assert(dependencies_node, "Dependencies node doesn't exist on project: " .. project.root_path)
+      self:_load_dependencies_nodes(dependencies_node, project, true, function()
+        vim.notify('Dependencies reloaded successfully')
+      end)
+    end
+    if node.type == 'tasks' or node.type == 'task_group' or node.type == 'task' then
+      local tasks_node = self._tree:get_node('-' .. project.id .. '-tasks')
+      assert(tasks_node, "Tasks node doesn't exist on project: " .. project.root_path)
+      self:_load_tasks_nodes(tasks_node, project, true, function()
+        vim.notify('Tasks reloaded successfully')
       end)
     end
   end, { noremap = true, nowait = true })
