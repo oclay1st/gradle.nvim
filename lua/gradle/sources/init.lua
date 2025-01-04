@@ -176,11 +176,11 @@ M.load_tasks_cache = function(project_path, callback)
   if not project_cache then
     return false
   end
-  local plugins = TasksCacheParser.parse(project_cache.key)
-  if #plugins == 0 then
+  local tasks = TasksCacheParser.parse(project_cache.key)
+  if #tasks == 0 then
     return false
   end
-  callback(Utils.SUCCEED_STATE, plugins)
+  callback(Utils.SUCCEED_STATE, tasks)
   return true
 end
 

@@ -61,8 +61,8 @@ This plugin is under **Development**.
     clean_before_execution = true,
   },
   cache = {
+    enable_tasks_cache = true,
     enable_dependencies_cache = true,
-    enable_plugins_cache = true,
     enable_help_options_cache = true,
   },
   projects_view = {

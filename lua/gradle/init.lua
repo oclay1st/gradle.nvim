@@ -12,7 +12,6 @@ local projects_view -- @type ProjectView
 local execution_view -- @type ExecuteView
 local initializer_view -- @type InitializerView
 local argument_view
----Setup the plugin
 
 ---Setup the plugin
 M.setup = function(opts)
