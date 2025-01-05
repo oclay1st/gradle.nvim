@@ -7,6 +7,7 @@ local Layout = require('nui.layout')
 local event = require('nui.utils.autocmd').event
 local highlights = require('gradle.config.highlights')
 local GradleConfig = require('gradle.config')
+local Utils = require('gradle.utils')
 
 ---@class DependenciesView
 ---@field private _dependencies_win NuiPopup
@@ -68,6 +69,7 @@ local function create_tree_node(dependency)
     is_duplicate = dependency.is_duplicate,
     has_conflict = dependency.conflict_version and true or false,
     conflict_version = dependency.conflict_version,
+    size = dependency.size,
   })
 end
 
@@ -171,6 +173,11 @@ function DependenciesView:_create_dependencies_tree()
       line:append(node.text)
       if node.configuration then
         line:append(' (' .. node.configuration .. ')', highlights.COMMENT)
+      end
+      if self._dependencies_win.winid then
+        local width = vim.api.nvim_win_get_width(self._dependencies_win.winid) - line:width()
+        local size = Utils.humanize_size(node.size) or '-'
+        line:append(string.format('%' .. width .. 's  ', size .. ' '), highlights.COMMENT)
       end
       return line
     end,
@@ -379,6 +386,8 @@ function DependenciesView:mount()
   self:_create_layout()
   ---Setup the dependency filter
   self:_create_dependency_filter()
+  --- Render the dependencies tree to show the size
+  self._dependencies_tree:render()
 end
 
 return DependenciesView

@@ -14,6 +14,7 @@ local CommandBuilder = require('gradle.utils.cmd_builder')
 local Utils = require('gradle.utils')
 local Console = require('gradle.utils.console')
 
+local uv = vim.loop
 local M = {}
 
 local build_gradle_file_pattern = '.*build%.gradle'
@@ -205,6 +206,7 @@ M.load_project_dependencies = function(project_path, force, callback)
     if state == Utils.SUCCEED_STATE then
       local output_lines = job:result()
       dependencies = DependencyTreeParser.parse(output_lines)
+      M.set_dependencies_size(dependencies)
       M.create_dependencies_cache(project_path, dependencies)
     elseif state == Utils.FAILED_STATE then
       local error_msg = 'Error loading dependencies. '
@@ -217,6 +219,33 @@ M.load_project_dependencies = function(project_path, force, callback)
   end
   local command = CommandBuilder.build_gradle_dependencies_cmd(project_path)
   Console.execute_command(command.cmd, command.args, show_output, _callback)
+end
+
+---Add size
+---@param dependencies Project.Dependency[]
+M.set_dependencies_size = function(dependencies)
+  for _, dependency in ipairs(dependencies) do
+    local jar_directory = vim.fn.resolve(
+      Utils.gradle_local_repository_path
+        .. Path.path.sep
+        .. dependency.group
+        .. Path.path.sep
+        .. dependency.name
+        .. Path.path.sep
+        .. dependency.version
+    )
+    if vim.fn.isdirectory(jar_directory) then
+      scan.scan_dir(jar_directory, {
+        search_pattern = { dependency.version .. '.jar$' },
+        depth = 2,
+        silent = true,
+        on_insert = function(path)
+          local stat = uv.fs_stat(path) or {}
+          dependency.size = stat.size
+        end,
+      })
+    end
+  end
 end
 
 --- Load the dependencies cache

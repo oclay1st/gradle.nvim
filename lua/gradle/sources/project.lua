@@ -101,6 +101,7 @@ end
 ---@field version? string
 ---@field is_duplicate? boolean
 ---@field conflict_version? string
+---@field size? number | nil
 local Dependency = {}
 Dependency.__index = Dependency
 
@@ -124,6 +125,7 @@ end
 ---@param version? string
 ---@param is_duplicate? boolean
 ---@param conflict_version? string
+---@param size? number | nil
 ---@return Project.Dependency
 function Project.Dependency(
   id,
@@ -134,7 +136,8 @@ function Project.Dependency(
   group,
   version,
   is_duplicate,
-  conflict_version
+  conflict_version,
+  size
 )
   local self = {}
   setmetatable(self, Dependency)
@@ -147,6 +150,7 @@ function Project.Dependency(
   self.version = version
   self.is_duplicate = is_duplicate or false
   self.conflict_version = conflict_version
+  self.size = size
   return self
 end
 

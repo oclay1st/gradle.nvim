@@ -14,6 +14,7 @@ local M = {}
 ---@field version? string
 ---@field is_duplicate? boolean
 ---@field conflict_version? string
+---@field size? number | nil
 
 --- Parse the dependencies cache
 M.parse = function(key)
@@ -34,7 +35,8 @@ M.parse = function(key)
           item.group,
           item.version,
           item.is_duplicate,
-          item.conflict_version
+          item.conflict_version,
+          item.size
         )
       )
     end
@@ -64,6 +66,7 @@ M.dump = function(key, dependencies)
       version = dependency.version,
       is_duplicate = dependency.is_duplicate,
       conflict_version = dependency.conflict_version,
+      size = dependency.size,
     })
   end
   local data = vim.json.encode(dependencies_cache)
