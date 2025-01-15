@@ -60,10 +60,12 @@ M.show_initializer_view = function()
   end
   initializer_view:mount()
 end
+
 M.show_argument_view = function()
   if not argument_view then
     argument_view = ArgumentView.new()
   end
   argument_view:mount()
 end
+
 return M

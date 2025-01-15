@@ -395,6 +395,7 @@ function ProjectView:_setup_win_maps()
   self._win:map('n', 'g', function()
     require('gradle').show_argument_view()
   end, { noremap = true })
+
   self._win:map('n', { '<esc>', 'q' }, function()
     self:hide()
   end)
