@@ -91,6 +91,13 @@ This plugin is under **Development**.
     filter_win = {
       border = { style = 'rounded' },
     },
+    dependency_details_win = {
+      size = {
+        width = '80%',
+        height = '6',
+      },
+      border = { style = 'rounded' },
+    }
   },
   initializer_view = {
     project_name_win = {
