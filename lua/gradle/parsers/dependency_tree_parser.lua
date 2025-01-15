@@ -25,13 +25,11 @@ local parse_dependency_type_module = function(text, id, parent_id, configuration
   assert(group, 'Failed to parse the dependency group from : ' .. text)
   assert(name, 'Failed to parse the dependency name from : ' .. text)
   assert(extra, 'Failed to parse the dependency extra from : ' .. text)
-  local version = extra:match('>%s(.+)')
-  local comment
+  local is_duplicate = extra:find('%(%*%)') ~= nil
+  local conflict_version, version, _ = extra:match('(.+)%s%->%s(.+)%s?(.*)')
   if not version then
-    version, comment = extra:match('(%S+)%s?(.*)')
+    version, _ = extra:match('(%S+)%s?(.*)')
   end
-  local is_duplicate = comment and comment:find('%(%*%)') ~= nil
-  local conflict_version = nil --- TODO: review later
   return Project.Dependency(
     id,
     parent_id,
