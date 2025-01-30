@@ -1,6 +1,7 @@
 local Input = require('nui.input')
 local Tree = require('nui.tree')
 local Line = require('nui.line')
+local Text = require('nui.text')
 local Popup = require('nui.popup')
 local Path = require('plenary.path')
 local event = require('nui.utils.autocmd').event
@@ -75,7 +76,7 @@ function InitializerView:_create_project_name_component()
       },
     }),
     {
-      prompt = '> ',
+      prompt = Text(' ', highlights.SPECIAL),
       on_change = function(value)
         self._project_name = value
       end,
@@ -117,7 +118,7 @@ function InitializerView:_create_project_package_component()
     }),
     {
       default_value = GradleConfig.options.initializer_view.project_package_win.default_value or '',
-      prompt = '> ',
+      prompt = Text(' ', highlights.SPECIAL),
       on_change = function(value)
         self._project_package = value
       end,
