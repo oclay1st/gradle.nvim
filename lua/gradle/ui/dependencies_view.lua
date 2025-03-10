@@ -15,6 +15,8 @@ local Utils = require('gradle.utils')
 ---@field private _dependency_usages_win NuiPopup
 ---@field private _dependency_usages_tree NuiTree
 ---@field private _dependency_filter NuiInput
+---@field private _dependencies_header NuiLine
+---@field private _dependency_usages_header NuiLine
 ---@field private _dependency_details_win NuiPopup
 ---@field private _layout NuiLayout
 ---@field private _default_opts table
@@ -116,12 +118,12 @@ function DependenciesView:_create_dependencies_win()
     indexed_dependencies[item.id] = item
   end
   self._dependencies_win:on(event.CursorMoved, function()
-    local current_node = self._dependencies_tree:get_node()
-    if current_node == nil then
-      return
-    end
-    local filtered_dependencies = filter_dependencies(current_node.name, indexed_dependencies)
     self._dependency_usages_tree:set_nodes({})
+    local filtered_dependencies = self.dependencies
+    local current_node = self._dependencies_tree:get_node()
+    if current_node then
+      filtered_dependencies = filter_dependencies(current_node.name, indexed_dependencies)
+    end
     for _, dependency in pairs(filtered_dependencies) do
       local parent_id = dependency.parent_id and '-' .. dependency.parent_id or nil
       local node = create_tree_node(dependency)
@@ -130,7 +132,12 @@ function DependenciesView:_create_dependencies_win()
         self._dependency_usages_tree:get_node(parent_id):expand()
       end
     end
-    self._dependency_usages_tree:render()
+    self._dependency_usages_tree:render(2)
+    self._dependency_usages_header:highlight(
+      self._dependency_usages_win.bufnr,
+      GradleConfig.namespace,
+      1
+    )
   end)
   self._dependencies_win:map('n', { 'i' }, function()
     local current_node = self._dependencies_tree:get_node()
@@ -146,27 +153,27 @@ function DependenciesView:_create_dependencies_win()
   self._dependencies_win:map('n', { '<c-s>' }, function()
     vim.api.nvim_set_current_win(self._dependency_usages_win.winid)
   end)
+  self._dependencies_win:map('n', { 'os' }, function()
+    self:_sort_dependencies_by_size()
+  end, { noremap = true, nowait = true })
+  self._dependencies_win:map('n', { 'on' }, function()
+    self:_sort_dependencies_by_name()
+  end, { noremap = true, nowait = true })
 end
 
----@private Toggle filter
-function DependenciesView:_toggle_filter()
-  if self._is_filter_visible then
-    self._dependency_filter:hide()
-    if self._filter_value == '' then
-      self._dependencies_win.border:set_text('bottom')
-    else
-      self._dependencies_win.border:set_text(
-        'bottom',
-        Text(' Filtered by: "' .. self._filter_value .. '" ', highlights.COMMENT),
-        'left'
-      )
-    end
-    vim.cmd('stopinsert')
-  else
-    self._dependency_filter:show()
-    vim.cmd('startinsert!')
-  end
-  self._is_filter_visible = not self._is_filter_visible
+---@private Create the dependencies header
+function DependenciesView:_create_dependencies_header()
+  local header = Line()
+  header:append(' ' .. GradleConfig.options.icons.gradle .. ' ', highlights.SPECIAL)
+  header:append(self.project_name, highlights.BOLD)
+  local spaces = vim.api.nvim_win_get_width(self._dependencies_win.winid) - header:width()
+  header:append(string.format('%' .. spaces .. 's  ', 'Size '), highlights.BOLD)
+  vim.api.nvim_set_option_value('modifiable', true, { buf = self._dependencies_win.bufnr })
+  vim.api.nvim_set_option_value('readonly', false, { buf = self._dependencies_win.bufnr })
+  header:render(self._dependencies_win.bufnr, GradleConfig.namespace, 1)
+  vim.api.nvim_set_option_value('modifiable', false, { buf = self._dependencies_win.bufnr })
+  vim.api.nvim_set_option_value('readonly', true, { buf = self._dependencies_win.bufnr })
+  self._dependencies_header = header
 end
 
 ---@private Create the dependencies tree
@@ -194,7 +201,9 @@ function DependenciesView:_create_dependencies_tree()
       return line
     end,
   })
-  self:_create_dependencies_tree_nodes()
+  local nodes = self:_create_dependencies_tree_nodes()
+  self._dependencies_tree:set_nodes(nodes)
+  self._dependencies_tree:render(2)
 end
 
 ---@private Create the node list of dependencies
@@ -221,6 +230,52 @@ function DependenciesView:_create_dependencies_tree_nodes()
   local nodes = vim.tbl_values(nodes_indexes)
   table.sort(nodes, function(a, b)
     return string.lower(a.text) < string.lower(b.text)
+  end)
+  return nodes
+end
+
+---@private Toggle filter
+function DependenciesView:_toggle_filter()
+  if self._is_filter_visible then
+    self._dependency_filter:hide()
+    if self._filter_value == '' then
+      self._dependencies_win.border:set_text('bottom')
+    else
+      self._dependencies_win.border:set_text(
+        'bottom',
+        Text(' Filtered by: "' .. self._filter_value .. '" ', highlights.COMMENT),
+        'left'
+      )
+    end
+    vim.cmd('stopinsert')
+  else
+    self._dependency_filter:show()
+    vim.cmd('startinsert!')
+  end
+  self._is_filter_visible = not self._is_filter_visible
+end
+
+---@private Sort the dependencies by size
+function DependenciesView:_sort_dependencies_by_size()
+  local nodes = self._dependencies_tree:get_nodes()
+  table.sort(nodes, function(a, b)
+    if a.size == nil then
+      return false
+    end
+    if b.size == nil then
+      return true
+    end
+    return a.size > b.size
+  end)
+  self._dependencies_tree:set_nodes(nodes)
+  self._dependencies_tree:render()
+end
+
+---@private Sort the dependencies by size
+function DependenciesView:_sort_dependencies_by_name()
+  local nodes = self._dependencies_tree:get_nodes()
+  table.sort(nodes, function(a, b)
+    return string.lower(a.name) < string.lower(b.name)
   end)
   self._dependencies_tree:set_nodes(nodes)
   self._dependencies_tree:render()
@@ -292,6 +347,19 @@ function DependenciesView:_create_dependency_usages_tree()
       return line
     end,
   })
+end
+
+---@private Create the dependency usages header
+function DependenciesView:_create_dependency_usages_header()
+  local header = Line()
+  header:append(' ' .. GradleConfig.options.icons.gradle .. ' ', highlights.SPECIAL)
+  header:append(self.project_name, highlights.BOLD)
+  vim.api.nvim_set_option_value('modifiable', true, { buf = self._dependency_usages_win.bufnr })
+  vim.api.nvim_set_option_value('readonly', false, { buf = self._dependency_usages_win.bufnr })
+  header:render(self._dependency_usages_win.bufnr, GradleConfig.namespace, 1)
+  vim.api.nvim_set_option_value('modifiable', false, { buf = self._dependency_usages_win.bufnr })
+  vim.api.nvim_set_option_value('readonly', true, { buf = self._dependency_usages_win.bufnr })
+  self._dependency_usages_header = header
 end
 
 ---@private React on filter change
@@ -415,7 +483,6 @@ function DependenciesView:_create_layout()
       Layout.Box(self._dependency_usages_win, { size = '50%' }),
     }, { dir = 'row' })
   )
-  self._layout:mount()
   local wins = { self._dependencies_win, self._dependency_usages_win }
   for _, win in pairs(wins) do
     win:on(event.BufLeave, function()
@@ -447,6 +514,12 @@ function DependenciesView:mount()
   self:_create_dependency_usages_win()
   ---Setup the layout
   self:_create_layout()
+  ---Mount the layout
+  self._layout:mount()
+  ---Setup the dependencies header after the layout get mount
+  self:_create_dependencies_header()
+  ---Setup the dependency usages header after the layout get mount
+  self:_create_dependency_usages_header()
   ---Setup the dependency filter
   self:_create_dependency_filter()
   --- Render the dependencies tree to show the size

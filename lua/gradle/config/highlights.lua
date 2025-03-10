@@ -6,6 +6,7 @@ M.CURSOR_LINE = 'GradleCursorLine'
 M.SPECIAL = 'GradleSpecial'
 M.COMMENT = 'GradleComment'
 M.TITLE = 'GradleSpecial'
+M.BOLD = 'GradleBold'
 M.ERROR = 'GradleError'
 M.INFO = 'GradleInfo'
 M.WARN = 'GradleWarn'
@@ -18,6 +19,10 @@ local highlights = {
   {
     name = M.NORMAL_FLOAT,
     config = { default = true, link = 'NormalFloat' },
+  },
+  {
+    name = M.BOLD,
+    config = { default = true, link = 'Bold' },
   },
   {
     name = M.CURSOR_LINE,

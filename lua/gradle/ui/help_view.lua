@@ -13,6 +13,8 @@ local help_keys = {
   { key = '<Ctrl-r>', desc = '[Projects] reload' },
   { key = '/, s', desc = '[Dependencies] search' },
   { key = '<Ctrl>s', desc = '[Dependencies] switch window' },
+  { key = '<on>', desc = '[Dependencies] order by name' },
+  { key = '<os>', desc = '[Dependencies] order by size' },
   { key = '<Esc>, q', desc = 'Close' },
 }
 

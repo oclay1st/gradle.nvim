@@ -143,7 +143,7 @@ This plugin is under **Development**.
   help_view = {
     size = {
       width = '80%',
-      height = '25%',
+      height = '34%',
     },
     border = { style = 'rounded' },
   },
