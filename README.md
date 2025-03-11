@@ -7,13 +7,16 @@
 
 **gradle.nvim** is a plugin to use Gradle (Java) in Neovim.
 
-<div>
-  <img src ="assets/screenshot.png">
-</div>
-
-## 🔥 Status
-
-This plugin is under **Development**.
+<table>
+  <tr>
+    <td> <img src="assets/console.png"  align="center" alt="1" width = 418x></td>
+    <td><img src="assets/dependencies.png" align="center" alt="2" width = 418px></td>
+   </tr>
+   <tr>
+    <td><img src="assets/initializer.png" align="center" alt="3" width = 418px></td>
+    <td><img src="assets/commands.png" align="center" alt="4" width = 418px></td>
+  </tr>
+</table>
 
 ## ✨ Features
 
