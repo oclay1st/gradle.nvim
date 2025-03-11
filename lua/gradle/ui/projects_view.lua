@@ -13,27 +13,27 @@ local highlights = require('gradle.config.highlights')
 local node_type_props = {
   command = {
     icon = GradleConfig.options.icons.command,
-    started_state_msg = ' ..running ',
-    pending_state_msg = ' ..pending ',
+    started_state_msg = ' ..running',
+    pending_state_msg = ' ..pending',
   },
   commands = { icon = GradleConfig.options.icons.tool_folder },
   task = {
     icon = GradleConfig.options.icons.tool,
-    started_state_msg = ' ..running ',
-    pending_state_msg = ' ..pending ',
+    started_state_msg = ' ..running',
+    pending_state_msg = ' ..pending',
   },
   tasks = {
     icon = GradleConfig.options.icons.tool_folder,
-    started_state_msg = ' ..loading ',
-    pending_state_msg = ' ..pending ',
+    started_state_msg = ' ..loading',
+    pending_state_msg = ' ..pending',
   },
   task_group = { icon = GradleConfig.options.icons.tool_folder },
   module_dependency = { icon = GradleConfig.options.icons.package },
   project_dependency = { icon = GradleConfig.options.icons.gradle },
   dependencies = {
     icon = GradleConfig.options.icons.tool_folder,
-    started_state_msg = ' ..loading ',
-    pending_state_msg = ' ..pending ',
+    started_state_msg = ' ..loading',
+    pending_state_msg = ' ..pending',
   },
   dependency_configuration = { icon = GradleConfig.options.icons.tool_folder },
   modules = { icon = GradleConfig.options.icons.tool_folder },
@@ -300,13 +300,13 @@ function ProjectView:_render_projects_tree()
       else
         line:append(node.text)
       end
-      if node.description then
-        line:append(' (' .. node.description .. ')', highlights.COMMENT)
-      end
       if node.state == Utils.STARTED_STATE then
         line:append(props.started_state_msg, highlights.INFO)
       elseif node.state == Utils.PENDING_STATE then
         line:append(props.pending_state_msg, highlights.WARN)
+      end
+      if node.description then
+        line:append(' (' .. node.description .. ')', highlights.COMMENT)
       end
       return line
     end,
