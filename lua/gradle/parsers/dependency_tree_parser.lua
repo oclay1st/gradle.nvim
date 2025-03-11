@@ -28,6 +28,9 @@ local parse_dependency_type_module = function(text, id, parent_id, configuration
   local is_duplicate = extra:find('%(%*%)') ~= nil
   local conflict_version, version, _ = extra:match('(.+)%s%->%s(.+)%s?(.*)')
   if not version then
+    version, _ = extra:match('%->%s(.+)%s?(.*)')
+  end
+  if not version then
     version, _ = extra:match('(%S+)%s?(.*)')
   end
   return Project.Dependency(
