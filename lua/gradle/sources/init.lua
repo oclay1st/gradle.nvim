@@ -226,25 +226,11 @@ end
 M.set_dependencies_size = function(dependencies)
   for _, dependency in ipairs(dependencies) do
     if dependency.type == 'module' then
-      local jar_directory = vim.fn.resolve(
-        Utils.gradle_local_repository_path
-          .. Path.path.sep
-          .. dependency.group
-          .. Path.path.sep
-          .. dependency.name
-          .. Path.path.sep
-          .. dependency.version
-      )
-      if vim.fn.isdirectory(jar_directory) then
-        scan.scan_dir(jar_directory, {
-          search_pattern = { dependency.version .. '.jar$' },
-          depth = 2,
-          silent = true,
-          on_insert = function(path)
-            local stat = uv.fs_stat(path) or {}
-            dependency.size = stat.size
-          end,
-        })
+      local jar_file_path =
+        Utils.get_jar_file_path(dependency.group, dependency.name, dependency.version)
+      if jar_file_path ~= '' then
+        local stat = uv.fs_stat(jar_file_path) or {}
+        dependency.size = stat.size
       end
     end
   end

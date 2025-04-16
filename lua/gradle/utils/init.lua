@@ -1,5 +1,6 @@
 local Path = require('plenary.path')
 local random = math.random
+
 local M = {}
 
 M.STARTED_STATE = 'STARTED'
@@ -40,6 +41,21 @@ M.humanize_size = function(size)
     unit_index = unit_index + 1
   end
   return string.format('%.2f %s', size, units[unit_index])
+end
+
+M.get_jar_file_path = function(group, name, version)
+  local jar_directory = vim.fn.resolve(
+    M.gradle_local_repository_path
+      .. Path.path.sep
+      .. group
+      .. Path.path.sep
+      .. name
+      .. Path.path.sep
+      .. version
+  )
+  return vim.fn.glob(
+    jar_directory .. Path.path.sep .. '*' .. Path.path.sep .. name .. '-' .. version .. '.jar'
+  )
 end
 
 return M
