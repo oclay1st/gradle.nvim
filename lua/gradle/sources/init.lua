@@ -202,20 +202,22 @@ M.load_project_dependencies = function(project_path, force, callback)
   end
   local show_output = GradleConfig.options.console.show_dependencies_load_execution
   local _callback = function(state, job)
-    local dependencies
-    if state == Utils.SUCCEED_STATE then
-      local output_lines = job:result()
-      dependencies = DependencyTreeParser.parse(output_lines)
-      M.set_dependencies_size(dependencies)
-      M.create_dependencies_cache(project_path, dependencies)
-    elseif state == Utils.FAILED_STATE then
-      local error_msg = 'Error loading dependencies. '
-      if not show_output then
-        error_msg = error_msg .. 'Enable the console output for more details.'
+    vim.schedule(function()
+      local dependencies
+      if state == Utils.SUCCEED_STATE then
+        local output_lines = job:result()
+        dependencies = DependencyTreeParser.parse(output_lines)
+        M.set_dependencies_size(dependencies)
+        M.create_dependencies_cache(project_path, dependencies)
+      elseif state == Utils.FAILED_STATE then
+        local error_msg = 'Error loading dependencies. '
+        if not show_output then
+          error_msg = error_msg .. 'Enable the console output for more details.'
+        end
+        vim.notify(error_msg, vim.log.levels.ERROR)
       end
-      vim.notify(error_msg, vim.log.levels.ERROR)
-    end
-    callback(state, dependencies)
+      callback(state, dependencies)
+    end)
   end
   local command = CommandBuilder.build_gradle_dependencies_cmd(project_path)
   Console.execute_command(command.cmd, command.args, show_output, _callback)
