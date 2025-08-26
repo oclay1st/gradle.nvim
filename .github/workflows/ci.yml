@@ -38,14 +38,10 @@ jobs:
         with:
           luaVersion: "luajit-openresty"
 
-      - name: Check luarocks env
+      - name: Check luarocks and execute test
         run: |
           which luarocks
           luarocks --version
           luajit -v
-
-      - name: run test
-        shell: bash
-        run: |
           luarocks install luacheck
           ./scripts/test.sh
