@@ -35,6 +35,14 @@ jobs:
 
       - name: luarocks
         uses: leafo/gh-actions-luarocks@v4
+        with:
+          luaVersion: "luajit-openresty"
+
+      - name: Check luarocks env
+        run: |
+          which luarocks
+          luarocks --version
+          luajit -v
 
       - name: run test
         shell: bash
