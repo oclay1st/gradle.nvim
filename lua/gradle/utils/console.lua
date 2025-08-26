@@ -18,6 +18,9 @@ local line_patterns = {
 }
 
 local function highlight_buf_line(buf, line, line_number)
+  if line == nil then
+    return --nothing to do
+  end
   for _, item in ipairs(line_patterns) do
     if string.find(line, item.pattern) then
       vim.api.nvim_buf_add_highlight(buf, 0, item.hl, line_number, item.col_start, item.col_end)
