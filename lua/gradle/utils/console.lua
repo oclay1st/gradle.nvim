@@ -18,9 +18,6 @@ local line_patterns = {
 }
 
 local function highlight_buf_line(buf, line, line_number)
-  if line == nil then
-    return --nothing to do
-  end
   for _, item in ipairs(line_patterns) do
     if string.find(line, item.pattern) then
       vim.api.nvim_buf_add_highlight(buf, 0, item.hl, line_number, item.col_start, item.col_end)
@@ -36,6 +33,9 @@ end
 ---Append a new line to the console
 ---@param line string
 local append_line = function(line)
+  if line == nil then
+    return --nothing to do
+  end
   local last_line = vim.api.nvim_buf_line_count(_buf)
   vim.fn.appendbufline(_buf, last_line - 1, line)
   highlight_buf_line(_buf, line, last_line - 1)
