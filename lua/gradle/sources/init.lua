@@ -151,19 +151,21 @@ M.load_project_tasks = function(project_path, force, callback)
   end
   local show_output = GradleConfig.options.console.show_tasks_load_execution
   local _callback = function(state, job)
-    local tasks
-    if state == Utils.SUCCEED_STATE then
-      local content_lines = job:result()
-      tasks = TasksParser.parse(content_lines)
-      M.create_tasks_cache(project_path, tasks)
-    elseif state == Utils.FAILED_STATE then
-      local error_msg = 'Error loading tasks. '
-      if not show_output then
-        error_msg = error_msg .. 'Enable the console output for more details.'
+    vim.schedule(function()
+      local tasks
+      if state == Utils.SUCCEED_STATE then
+        local content_lines = job:result()
+        tasks = TasksParser.parse(content_lines)
+        M.create_tasks_cache(project_path, tasks)
+      elseif state == Utils.FAILED_STATE then
+        local error_msg = 'Error loading tasks. '
+        if not show_output then
+          error_msg = error_msg .. 'Enable the console output for more details.'
+        end
+        vim.notify(error_msg, vim.log.levels.ERROR)
       end
-      vim.notify(error_msg, vim.log.levels.ERROR)
-    end
-    callback(state, tasks)
+      callback(state, tasks)
+    end)
   end
   local command = CommandBuilder.build_gradle_tasks_cmd(project_path)
   Console.execute_command(command.cmd, command.args, show_output, _callback)
