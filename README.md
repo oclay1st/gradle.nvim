@@ -16,6 +16,10 @@
     <td><img src="assets/initializer.png" align="center" alt="3" width = 418px></td>
     <td><img src="assets/commands.png" align="center" alt="4" width = 418px></td>
   </tr>
+  <tr>
+    <td><img src="assets/favorites.png" align="center" alt="5" width = 418px></td>
+    <td><img src="assets/arguments.png" align="center" alt="6" width = 418px></td>
+  </tr>
 </table>
 
 ## ✨ Features
