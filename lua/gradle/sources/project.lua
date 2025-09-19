@@ -8,8 +8,9 @@ local Utils = require('gradle.utils')
 ---@field name string
 ---@field tasks Project.Task[]
 ---@field dependencies Project.Dependency[]
----@field commands Project.Command[]
+---@field custom_commands Project.Command[]
 ---@field modules Project[]
+---@field favorites Project.Favorite[]
 local Project = {}
 Project.__index = Project
 
@@ -43,6 +44,7 @@ function Project.new(
     dependencies = dependencies or {},
     commands = commands or {},
     modules = modules or {},
+    favorites = {},
   }, Project)
 end
 
@@ -61,7 +63,7 @@ end
 ---Set commands
 ---@param commands Project.Command[]
 function Project:set_commands(commands)
-  self.commands = commands
+  self.custom_commands = commands
 end
 
 ---Add sub project
@@ -89,6 +91,12 @@ function Project.Command(name, description, cmd_args)
   self.description = description
   self.cmd_args = cmd_args
   return self
+end
+
+---Convert to favorite
+---@return Project.Favorite
+function Command:as_favorite()
+  return Project.Favorite(self.name, 'custom_command', self.description, self.cmd_args)
 end
 
 ---@class Project.Dependency
@@ -181,6 +189,7 @@ end
 ---@field group string
 ---@field name string
 ---@field description string
+---@field cmd_arg string
 local Task = {}
 
 Task.__index = Task
@@ -195,9 +204,21 @@ function Project.Task(name, description, group)
   local self = {}
   setmetatable(self, Task)
   self.name = name
+  self.cmd_arg = name
   self.description = description
   self.group = group
   return self
+end
+
+---Convert as favorite
+---@return Project.Favorite
+function Task:as_favorite()
+  return Project.Favorite(
+    self.group .. ':' .. self.name,
+    'task',
+    self.description,
+    { self.cmd_arg }
+  )
 end
 
 ---@class DependencyGroup
@@ -218,6 +239,55 @@ function Project:group_tasks_by_group_name()
     end
   end
   return group_by
+end
+
+---@class Project.Favorite
+---@field name string
+---@field type string
+---@field description string
+---@field cmd_args string[]
+local Favorite = {}
+
+Favorite.__index = Favorite
+
+---@alias Favorite Project.Favorite
+
+---@param name string
+---@param type string
+---@param description? string
+---@param cmd_args string[]
+---@return  Project.Favorite
+function Project.Favorite(name, type, description, cmd_args) --- it could grow
+  local self = {}
+  setmetatable(self, Favorite)
+  self.name = assert(name, 'Favorite command name required')
+  self.type = assert(type, 'Favorite command type required')
+  self.description = description
+  self.cmd_args = assert(cmd_args, 'Favorite command args required')
+  return self
+end
+
+---Add to favorite commands
+---@param favorite Project.Favorite
+function Project:add_favorite(favorite)
+  table.insert(self.favorites, favorite)
+end
+
+---Remove from favorite commands
+---@param favorite Project.Favorite
+function Project:remove_favorite(favorite)
+  for index, item in ipairs(self.favorites) do
+    if item.name == favorite.name and item.type == favorite.type then
+      table.remove(self.favorites, index)
+      return
+    end
+  end
+end
+
+function Project:has_favorite_command(name, type)
+  return vim.tbl_contains(self.favorites, function(item)
+    return item.name == name and item.type == type
+  end, { predicate = true })
 end
 
 return Project

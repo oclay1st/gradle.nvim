@@ -9,3 +9,7 @@ end, { desc = 'Show Gradle Ccommand Execution UI', bar = true, nargs = 0 })
 vim.api.nvim_create_user_command('GradleInit', function()
   require('gradle').show_initializer_view()
 end, { desc = 'Show Gradle Initializer UI', bar = true, nargs = 0 })
+
+vim.api.nvim_create_user_command('GradleFavorites', function()
+  require('gradle').show_favorite_commands()
+end, { desc = 'Show Gradle Favorites Commands', bar = true, nargs = 0 })

@@ -11,12 +11,12 @@ local GradleConfig = require('gradle.config')
 local highlights = require('gradle.config.highlights')
 
 local node_type_props = {
-  command = {
+  custom_command = {
     icon = GradleConfig.options.icons.command,
     started_state_msg = ' ..running',
     pending_state_msg = ' ..pending',
   },
-  commands = { icon = GradleConfig.options.icons.tool_folder },
+  custom_commands = { icon = GradleConfig.options.icons.tool_folder },
   task = {
     icon = GradleConfig.options.icons.tool,
     started_state_msg = ' ..running',
@@ -82,7 +82,7 @@ end
 ---Execute the command node
 ---@param node NuiTree.Node
 ---@param project Project
-function ProjectView:_load_command_node(node, project)
+function ProjectView:_load_custom_command_node(node, project)
   local command = CommandBuilder.build_gradle_cmd(project.root_path, node.cmd_args)
   local show_output = GradleConfig.options.console.show_command_execution
   Console.execute_command(command.cmd, command.args, show_output, function(state)
@@ -126,9 +126,9 @@ function ProjectView:_load_tasks_nodes(node, project, force, on_success)
               id = Utils.uuid(),
               text = task.name,
               type = 'task',
-              cmd_arg = task.name,
               project_id = project.id,
-              description = task.description,
+              is_favorite = project:has_favorite_command(task.group .. ':' .. task.name, 'task'),
+              extra = task,
             })
             tasks_nodes[index] = task_node
           end
@@ -205,24 +205,24 @@ end
 ---@return NuiTree.Node
 function ProjectView:_create_project_node(project)
   ---Map command nodes
-  local command_nodes = {}
-  for index, command in ipairs(project.commands) do
-    command_nodes[index] = NuiTree.Node({
+  local custom_command_nodes = {}
+  for index, command in ipairs(project.custom_commands) do
+    custom_command_nodes[index] = NuiTree.Node({
       text = command.name,
-      type = 'command',
-      description = command.description,
-      cmd_args = command.cmd_args,
+      type = 'custom_command',
       started_state_message = 'running',
       project_id = project.id,
+      is_favorite = project:has_favorite_command(command.name, 'custom_command'),
+      extra = command,
     })
   end
 
   ---Map Commands node
   local commands_node = NuiTree.Node({
     text = 'Commands',
-    type = 'commands',
+    type = 'custom_commands',
     project_id = project.id,
-  }, command_nodes)
+  }, custom_command_nodes)
 
   ---Map Tasks node
   local tasks_node = NuiTree.Node({
@@ -259,7 +259,7 @@ function ProjectView:_create_project_node(project)
 
   local project_nodes = { tasks_node }
 
-  if #command_nodes > 0 then
+  if #custom_command_nodes > 0 then
     table.insert(project_nodes, 1, commands_node)
   end
 
@@ -294,7 +294,8 @@ function ProjectView:_render_projects_tree()
       else
         line:append('  ')
       end
-      line:append(props.icon .. ' ', highlights.SPECIAL)
+      local icon = node.is_favorite and GradleConfig.options.icons.favorite or props.icon
+      line:append(icon .. ' ', highlights.SPECIAL)
       if node.is_duplicate and not node:has_children() then
         line:append(node.text, highlights.COMMENT)
       else
@@ -305,8 +306,8 @@ function ProjectView:_render_projects_tree()
       elseif node.state == Utils.PENDING_STATE then
         line:append(props.pending_state_msg, highlights.WARN)
       end
-      if node.description then
-        line:append(' (' .. node.description .. ')', highlights.COMMENT)
+      if node.extra and node.extra.description then
+        line:append(' (' .. node.extra.description .. ')', highlights.COMMENT)
       end
       return line
     end,
@@ -331,34 +332,20 @@ end
 function ProjectView:_render_menu_header_line()
   local line = NuiLine()
   local separator = ' '
-  line:append(
-    GradleConfig.options.icons.entry .. GradleConfig.options.icons.new,
-    highlights.SPECIAL
-  )
+  line:append(GradleConfig.options.icons.entry, highlights.SPECIAL)
+  line:append(GradleConfig.options.icons.new, highlights.SPECIAL)
   line:append(' Create')
   line:append('<c>' .. separator, highlights.COMMENT)
-  line:append(
-    GradleConfig.options.icons.entry .. GradleConfig.options.icons.tree,
-    highlights.SPECIAL
-  )
+  line:append(GradleConfig.options.icons.tree, highlights.SPECIAL)
   line:append(' Analyze')
   line:append('<a>' .. separator, highlights.COMMENT)
-  line:append(
-    GradleConfig.options.icons.entry .. GradleConfig.options.icons.command,
-    highlights.SPECIAL
-  )
+  line:append(GradleConfig.options.icons.command, highlights.SPECIAL)
   line:append(' Execute')
   line:append('<e>' .. separator, highlights.COMMENT)
-  line:append(
-    GradleConfig.options.icons.entry .. GradleConfig.options.icons.argument,
-    highlights.SPECIAL
-  )
-  line:append(' Args')
-  line:append('<g>' .. separator, highlights.COMMENT)
-  line:append(
-    GradleConfig.options.icons.entry .. GradleConfig.options.icons.help,
-    highlights.SPECIAL
-  )
+  line:append(GradleConfig.options.icons.favorite, highlights.SPECIAL)
+  line:append(' Favorites')
+  line:append('<f>' .. separator, highlights.COMMENT)
+  line:append(GradleConfig.options.icons.help, highlights.SPECIAL)
   line:append(' Help')
   line:append('<?>' .. separator, highlights.COMMENT)
   self._menu_header_line = line
@@ -428,6 +415,36 @@ function ProjectView:_setup_win_maps()
     end
   end, { noremap = true, nowait = true })
 
+  self._win:map('n', 'f', function()
+    local _projects = self.projects
+    local node = self._tree:get_node()
+    if node ~= nil then
+      local project = self:_lookup_project(node.project_id)
+      _projects = { project }
+    end
+    require('gradle').show_favorite_commands(_projects)
+  end, { noremap = true })
+
+  self._win:map('n', 'F', function()
+    local node = self._tree:get_node()
+    if node == nil then
+      return
+    end
+    local project = self:_lookup_project(node.project_id)
+    if node.type == 'custom_command' or node.type == 'task' then
+      if not node.is_favorite then
+        node.is_favorite = true
+        Sources.add_favorite_command(node.extra:as_favorite(), project)
+        vim.notify(node.text .. ' was added to favorites successfully')
+      else
+        node.is_favorite = false
+        Sources.remove_favorite_command(node.extra:as_favorite(), project)
+        vim.notify(node.text .. ' removed from favorites successfully')
+      end
+      self._tree:render()
+    end
+  end, { noremap = true })
+
   self._win:map('n', { '<c-r>' }, function()
     local node = self._tree:get_node()
     if node == nil then
@@ -466,8 +483,8 @@ function ProjectView:_setup_win_maps()
     end
     local updated = false
     local project = self:_lookup_project(node.project_id)
-    if node.type == 'command' then
-      self:_load_command_node(node, project)
+    if node.type == 'custom_command' then
+      self:_load_custom_command_node(node, project)
     elseif node.type == 'task' then
       self:_load_task_node(node, project)
     elseif node.type == 'tasks' and not node.is_loaded then

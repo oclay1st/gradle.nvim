@@ -10,6 +10,7 @@ local DependencyTreeParser = require('gradle.parsers.dependency_tree_parser')
 local DependenciesCacheParser = require('gradle.parsers.dependencies_cache_parser')
 local HelpOptionsParser = require('gradle.parsers.help_options_parser')
 local HelpOptionsCacheParser = require('gradle.parsers.help_options_cache_parser')
+local FavoritesCacheParser = require('gradle.parsers.favorites_cache_parser')
 local CommandBuilder = require('gradle.utils.cmd_builder')
 local Utils = require('gradle.utils')
 local Console = require('gradle.utils.console')
@@ -34,6 +35,17 @@ local function sort_projects(projects)
   for _, project in ipairs(projects) do
     if #project.modules ~= 0 then
       sort_projects(project.modules)
+    end
+  end
+end
+
+---Load the favorites commands for all the projects
+---@param projects Project[]
+local function load_projects_favorites(projects)
+  for _, project in ipairs(projects) do
+    M.load_favorite_commands_cache(project)
+    if #project.modules ~= 0 then
+      load_projects_favorites(project.modules)
     end
   end
 end
@@ -128,6 +140,7 @@ M.scan_projects = function(base_path, callback)
     end,
     on_exit = function()
       sort_projects(projects)
+      load_projects_favorites(projects)
       callback(projects)
     end,
   })
@@ -306,4 +319,44 @@ M.create_help_options_cache = function(options)
   end
   HelpOptionsCacheParser.dump(options)
 end
+
+---Add command ton favorites
+---@param favorite Project.Favorite
+---@param project Project
+M.add_favorite_command = function(favorite, project)
+  project:add_favorite(favorite)
+  M.update_favorite_commands_cache(project.root_path, project.favorites)
+end
+
+--- Remove command from favorites
+---@param favorite Project.Favorite
+---@param project Project
+M.remove_favorite_command = function(favorite, project)
+  project:remove_favorite(favorite)
+  M.update_favorite_commands_cache(project.root_path, project.favorites)
+end
+
+--- Remove command from favorite
+---@param root_path string
+---@param favorites Project.Favorite[]
+M.update_favorite_commands_cache = function(root_path, favorites)
+  local project_cache = M.load_project_cache(root_path)
+  if not project_cache then
+    return false
+  end
+  local key = ProjectsCacheParser.register(root_path)
+  FavoritesCacheParser.dump(key, favorites)
+end
+
+---Load the favorite project commands from cache
+---@param project Project
+M.load_favorite_commands_cache = function(project)
+  local project_cache = M.load_project_cache(project.root_path)
+  if not project_cache then
+    return false
+  end
+  local favorite_commands = FavoritesCacheParser.parse(project_cache.key)
+  project.favorites = favorite_commands
+end
+
 return M

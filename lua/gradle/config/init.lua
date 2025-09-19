@@ -179,6 +179,22 @@ local defaultOptions = {
       },
     },
   },
+  favorite_commands_view = {
+    size = {
+      width = '40%',
+      height = '30%',
+    },
+    input_win = {
+      border = {
+        style = { '╭', '─', '╮', '│', '│', '─', '│', '│' },
+      },
+    },
+    options_win = {
+      border = {
+        style = { '', '', '', '│', '╯', '─', '╰', '│' },
+      },
+    },
+  },
   console = {
     show_command_execution = true,
     show_task_execution = true,
@@ -210,6 +226,7 @@ local defaultOptions = {
     entry = ' ',
     search = '',
     argument = '',
+    favorite = '',
   },
 }
 

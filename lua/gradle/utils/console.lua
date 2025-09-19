@@ -43,7 +43,7 @@ local append_line = function(line)
 end
 
 local function setup_buffer()
-  if not _win or not vim.api.nvim_win_is_valid(_win) then
+  if not _win or _win == 0 or not vim.api.nvim_win_is_valid(_win) then
     _win = vim.fn.win_getid(vim.fn.winnr('#'))
   end
   vim.api.nvim_set_current_win(_win)

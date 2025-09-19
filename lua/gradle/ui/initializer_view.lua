@@ -365,7 +365,7 @@ function InitializerView:_create_project()
         )
         if choice == 1 then
           vim.api.nvim_set_current_dir(directory:absolute())
-          require('gradle').refresh()
+          require('gradle').reset_projects_view()
         end
       elseif state == Utils.FAILED_STATE then
         vim.notify('Error creating  project: ' .. vim.trim(self._project_name))

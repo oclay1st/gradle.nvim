@@ -5,6 +5,7 @@ local ProjectView = require('gradle.ui.projects_view')
 local ExecutionView = require('gradle.ui.execution_view')
 local InitializerView = require('gradle.ui.initializer_view')
 local ArgumentView = require('gradle.ui.argument_view')
+local FavoritesView = require('gradle.ui.favorites_view')
 
 local M = {}
 
@@ -40,11 +41,17 @@ M.toggle_projects_view = function()
   end
 end
 
-M.refresh = function()
+M.reset_projects_view = function()
   if projects_view then
     projects_view:unmount()
   end
   load_projects_view()
+end
+
+M.refresh_projects_view = function(projects)
+  if projects_view then
+    projects_view:refresh_projects(projects)
+  end
 end
 
 M.show_execution_view = function()
@@ -66,6 +73,23 @@ M.show_argument_view = function()
     argument_view = ArgumentView.new()
   end
   argument_view:mount()
+end
+
+---Show favorite commands
+---@param projects? Project[]
+M.show_favorite_commands = function(projects)
+  local workspace_path = vim.fn.getcwd()
+  if projects == nil then
+    Sources.scan_projects(workspace_path, function(_projects)
+      vim.schedule(function()
+        local favorite_view = FavoritesView.new(_projects)
+        favorite_view:mount()
+      end)
+    end)
+  else
+    local favorite_view = FavoritesView.new(projects)
+    favorite_view:mount()
+  end
 end
 
 return M
