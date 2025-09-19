@@ -188,6 +188,22 @@
       },
     },
   },
+  favorite_commands_view = {
+    size = {
+      width = '40%',
+      height = '30%',
+    },
+    input_win = {
+      border = {
+        style = { '╭', '─', '╮', '│', '│', '─', '│', '│' },
+      },
+    },
+    options_win = {
+      border = {
+        style = { '', '', '', '│', '╯', '─', '╰', '│' },
+      },
+    },
+  },
   icons = {
     package = '',
     new = '',
@@ -206,6 +222,7 @@
     entry = ' ',
     search = '',
     argument = '',
+    favorite = '',
   },
 }
 ```
