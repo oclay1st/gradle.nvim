@@ -47,7 +47,7 @@ function ArgumentView.new()
       },
     },
     _prev_win = vim.api.nvim_get_current_win(),
-    _input_prompt = Text(GradleConfig.options.icons.search .. ' Search ', highlights.SPECIAL),
+    _input_prompt = Text(GradleConfig.options.icons.search .. ' ', highlights.SPECIAL),
   }, ArgumentView)
 end
 
@@ -56,7 +56,7 @@ local function create_option_node(option)
     arg = option.arg,
     value = option.value,
     enabled = option.enabled,
-    text = option.arg .. '=' .. option.value,
+    text = option.arg .. (option.value and '=' .. option.value or ''),
   })
 end
 
@@ -192,22 +192,20 @@ function ArgumentView:_create_options_component()
     },
   }))
   self:_create_options_tree_list()
-  self._options_component:map('n', '<enter>', function()
+  self._options_component:map('n', { '<enter>', '<space>' }, function()
     local current_node = self._options_tree:get_node()
 
     if not current_node or current_node.type == 'loading' then
       return
     end
     vim.schedule(function()
-      for i = 1, #GradleConfig.options.default_arguments_view.arguments do
-        if
-          GradleConfig.options.default_arguments_view.arguments[i].arg == current_node.arg
-          and GradleConfig.options.default_arguments_view.arguments[i].value == current_node.value
-        then
-          if GradleConfig.options.default_arguments_view.arguments[i].enabled then
-            GradleConfig.options.default_arguments_view.arguments[i].enabled = false
+      local _arguments = GradleConfig.options.default_arguments_view.arguments
+      for i = 1, #_arguments do
+        if _arguments[i].arg == current_node.arg and _arguments[i].value == current_node.value then
+          if _arguments[i].enabled then
+            _arguments[i].enabled = false
           else
-            GradleConfig.options.default_arguments_view.arguments[i].enabled = true
+            _arguments[i].enabled = true
           end
         end
       end

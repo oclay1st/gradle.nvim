@@ -21,7 +21,7 @@ Project.__index = Project
 ---@param settings_gradle_path? string
 ---@param tasks? Project.Task[]
 ---@param dependencies? Project.Dependency[]
----@param commands? Project.Command[]
+---@param custom_commands? Project.Command[]
 ---@param modules? Project[]
 ---@return Project
 function Project.new(
@@ -31,7 +31,7 @@ function Project.new(
   settings_gradle_path,
   tasks,
   dependencies,
-  commands,
+  custom_commands,
   modules
 )
   return setmetatable({
@@ -42,7 +42,7 @@ function Project.new(
     settings_gradle_path = settings_gradle_path,
     tasks = tasks or {},
     dependencies = dependencies or {},
-    commands = commands or {},
+    custom_commands = custom_commands or {},
     modules = modules or {},
     favorites = {},
   }, Project)

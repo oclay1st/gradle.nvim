@@ -83,7 +83,7 @@ end
 ---@param node NuiTree.Node
 ---@param project Project
 function ProjectView:_load_custom_command_node(node, project)
-  local command = CommandBuilder.build_gradle_cmd(project.root_path, node.cmd_args)
+  local command = CommandBuilder.build_gradle_cmd(project.root_path, node.extra.cmd_args)
   local show_output = GradleConfig.options.console.show_command_execution
   Console.execute_command(command.cmd, command.args, show_output, function(state)
     vim.schedule(function()
@@ -97,7 +97,7 @@ end
 ---@param node NuiTree.Node
 ---@param project Project
 function ProjectView:_load_task_node(node, project)
-  local command = CommandBuilder.build_gradle_cmd(project.root_path, { node.cmd_arg })
+  local command = CommandBuilder.build_gradle_cmd(project.root_path, { node.extra.cmd_arg })
   local show_output = GradleConfig.options.console.show_task_execution
   Console.execute_command(command.cmd, command.args, show_output, function(state)
     vim.schedule(function()
@@ -240,7 +240,6 @@ function ProjectView:_create_project_node(project)
     text = 'Dependencies',
     type = 'dependencies',
     is_loaded = false,
-    cmd_args = { '' },
     started_state_message = 'loading',
     project_id = project.id,
   })

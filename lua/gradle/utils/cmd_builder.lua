@@ -19,13 +19,12 @@ CommandBuilder.build_gradle_cmd = function(project_path, extra_args)
   for _, value in ipairs(extra_args) do
     table.insert(_args, value)
   end
-  for i = 1, #GradleConfig.options.default_arguments_view.arguments do
-    if GradleConfig.options.default_arguments_view.arguments[i].enabled == true then
+  local default_args = GradleConfig.options.default_arguments_view.arguments
+  for i = 1, #default_args do
+    if default_args[i].enabled == true then
       table.insert(
         _args,
-        GradleConfig.options.default_arguments_view.arguments[i].arg
-          .. '='
-          .. GradleConfig.options.default_arguments_view.arguments[i].value
+        default_args[i].arg .. (default_args[i].value and '=' .. default_args[i].value or '')
       )
     end
   end
