@@ -158,7 +158,7 @@ local defaultOptions = {
   help_view = {
     size = {
       width = '80%',
-      height = '34%',
+      height = '35%',
     },
     border = { style = 'rounded' },
   },
