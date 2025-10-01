@@ -402,7 +402,10 @@ function ProjectView:_setup_win_maps()
     end
     local project = self:_lookup_project(node.project_id)
     local dependencies_node = self._tree:get_node('-' .. project.id .. '-dependencies')
-    assert(dependencies_node, "Dependencies node doesn't exist on project: " .. project.root_path)
+    if not dependencies_node then
+      vim.notify('Not dependencies found on project: ' .. project.root_path)
+      return
+    end
     if dependencies_node.is_loaded then
       local dependency_view = DependenciesView.new(project.name, project.dependencies)
       dependency_view:mount()
