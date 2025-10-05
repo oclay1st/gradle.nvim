@@ -9,16 +9,16 @@
 
 <table>
   <tr>
-    <td> <img src="assets/console.png"  align="center" alt="1" width = 418x></td>
-    <td><img src="assets/dependencies.png" align="center" alt="2" width = 418px></td>
+    <td><span>Console</span><img src="assets/console.png"  align="center" alt="1" width = 418x></td>
+    <td><span>Dependency Tree</span><img src="assets/dependencies.png" align="center" alt="2" width = 418px></td>
    </tr>
    <tr>
-    <td><img src="assets/initializer.png" align="center" alt="3" width = 418px></td>
-    <td><img src="assets/commands.png" align="center" alt="4" width = 418px></td>
+    <td><span>Project Initializer</span><img src="assets/initializer.png" align="center" alt="3" width = 418px></td>
+    <td><span>Commands Options</span><img src="assets/commands.png" align="center" alt="4" width = 418px></td>
   </tr>
   <tr>
-    <td><img src="assets/favorites.png" align="center" alt="5" width = 418px></td>
-    <td><img src="assets/arguments.png" align="center" alt="6" width = 418px></td>
+    <td><span>Favorite Commands</span><img src="assets/favorites.png" align="center" alt="5" width = 418px></td>
+    <td><span>Default Arguments</span><img src="assets/arguments.png" align="center" alt="6" width = 418px></td>
   </tr>
 </table>
 
@@ -48,15 +48,11 @@
    cmd = { "Gradle", "GradleExec", "GradleInit", "GradleFavorites" },
    dependencies = {
       "nvim-lua/plenary.nvim",
-      "MunifTanjim/nui.nvim",
-      -- optional which-key group registration
-      {
-        'folke/which-key.nvim',
-        opts = { spec = { { mode = { 'n', 'v' }, { '<leader>G', group = 'Gradle', icon = { icon = '', color = 'blue' } } } } },
-      },
+      "MunifTanjim/nui.nvim"
    },
    opts = {}, -- options, see default configuration
    keys = {
+      { '<leader>G', desc = '+Gradle' ,  mode = { 'n', 'v' } },
       { '<leader>Gg', '<cmd>Gradle<cr>', desc = 'Gradle Projects' },
       { '<leader>Gf', '<cmd>GradleFavorites<cr>', desc = 'Gradle Favorite Commands' }
     },
