@@ -31,8 +31,28 @@ T['should dump and parse module dependencies correctly'] = function()
   local id_a = Utils_uuid()
   local id_b = Utils_uuid()
   local deps = {
-    Project.Dependency(id_a, nil, 'runtimeClasspath', 'module', 'bar', 'org.foo', '1.0', false, nil),
-    Project.Dependency(id_b, id_a, 'runtimeClasspath', 'module', 'baz', 'org.foo', '2.0', true, '1.5'),
+    Project.Dependency(
+      id_a,
+      nil,
+      'runtimeClasspath',
+      'module',
+      'bar',
+      'org.foo',
+      '1.0',
+      false,
+      nil
+    ),
+    Project.Dependency(
+      id_b,
+      id_a,
+      'runtimeClasspath',
+      'module',
+      'baz',
+      'org.foo',
+      '2.0',
+      true,
+      '1.5'
+    ),
   }
   DepsCacheParser.dump(key, deps)
   local loaded = DepsCacheParser.parse(key)
@@ -79,7 +99,18 @@ T['should preserve size field'] = function()
   local key = 'test-size'
   local id = Utils_uuid()
   local deps = {
-    Project.Dependency(id, nil, 'runtimeClasspath', 'module', 'bar', 'org.foo', '1.0', false, nil, 1024),
+    Project.Dependency(
+      id,
+      nil,
+      'runtimeClasspath',
+      'module',
+      'bar',
+      'org.foo',
+      '1.0',
+      false,
+      nil,
+      1024
+    ),
   }
   DepsCacheParser.dump(key, deps)
   local loaded = DepsCacheParser.parse(key)

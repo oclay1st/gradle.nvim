@@ -160,7 +160,7 @@ end
 
 T['should skip configurations with (n) suffix in description'] = function()
   local lines = {
-    "someConfig - some description (n)",
+    'someConfig - some description (n)',
     "runtimeClasspath - Runtime classpath of source set 'main'.",
     '+--- org.foo:bar:1.0',
   }
