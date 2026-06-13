@@ -14,7 +14,8 @@ local M = {}
 ---@param key string
 ---@return Project.Favorite[]
 M.parse = function(key)
-  local favorite_commands_json = vim.fs.joinpath(Utils.gradle_cache_path, 'favorite_commands', key .. '.json')
+  local favorite_commands_json =
+    vim.fs.joinpath(Utils.gradle_cache_path, 'favorite_commands', key .. '.json')
   local favorite_commands = {}
   if FileUtils.is_file(favorite_commands_json) then
     local data = FileUtils.read(favorite_commands_json)
