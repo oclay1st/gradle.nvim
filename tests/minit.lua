@@ -2,8 +2,8 @@ vim.opt.rtp:append('.')
 
 local plugins = {
   {
-    path = os.getenv('PLENARY_DIR') or '/tmp/plenary.nvim',
-    repo = 'https://github.com/nvim-lua/plenary.nvim',
+    path = os.getenv('MINI_DIR') or '/tmp/mini.nvim',
+    repo = 'https://github.com/echasnovski/mini.nvim',
   },
   {
     path = os.getenv('NUI_DIR') or '/tmp/nui.nvim',
@@ -18,5 +18,10 @@ for _, plugin in ipairs(plugins) do
   vim.opt.rtp:append(plugin.path)
 end
 
-vim.cmd('runtime plugin/plenary.vim')
-require('plenary.busted')
+require('mini.test').setup({
+  collect = {
+    find_files = function()
+      return vim.fn.globpath('tests', '**/*_spec.lua', true, true)
+    end,
+  },
+})
