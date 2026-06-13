@@ -437,11 +437,11 @@ function ProjectView:_setup_win_maps()
       if not node.is_favorite then
         node.is_favorite = true
         Sources.add_favorite_command(node.extra:as_favorite(), project)
-        vim.notify(node.text .. ' was added to favorites successfully')
+        vim.notify(':' .. node.text .. ' was added to favorites successfully')
       else
         node.is_favorite = false
         Sources.remove_favorite_command(node.extra:as_favorite(), project)
-        vim.notify(node.text .. ' removed from favorites successfully')
+        vim.notify(':' .. node.text .. ' removed from favorites successfully')
       end
       self._tree:render()
     end

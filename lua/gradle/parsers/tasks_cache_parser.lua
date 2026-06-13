@@ -1,4 +1,4 @@
-local Path = require('plenary.path')
+local FileUtils = require('gradle.utils.fs')
 local Utils = require('gradle.utils')
 local Project = require('gradle.sources.project')
 
@@ -11,9 +11,9 @@ local M = {}
 
 --- Parse the tasks cache
 M.parse = function(key)
-  local tasks_json = Path:new(Utils.gradle_cache_path, 'tasks', key .. '.json')
-  if tasks_json:exists() then
-    local data = tasks_json:read()
+  local tasks_json = vim.fs.joinpath(Utils.gradle_cache_path, 'tasks', key .. '.json')
+  if FileUtils.is_file(tasks_json) then
+    local data = FileUtils.read(tasks_json)
     local tasks_cache = vim.json.decode(data)
     local tasks = {}
     for _, item in ipairs(tasks_cache) do
@@ -28,10 +28,8 @@ end
 --- @param  key string
 --- @param tasks Project.Task[]
 M.dump = function(key, tasks)
-  local tasks_cache_path = Path:new(Utils.gradle_cache_path, 'tasks')
-  if not tasks_cache_path:exists() then
-    tasks_cache_path:mkdir()
-  end
+  local tasks_cache_path = vim.fs.joinpath(Utils.gradle_cache_path, 'tasks')
+  FileUtils.mkdir(tasks_cache_path)
   ---@type TaskCache[]
   local tasks_cache = {}
   for _, task in ipairs(tasks) do
@@ -41,9 +39,8 @@ M.dump = function(key, tasks)
     )
   end
   local data = vim.json.encode(tasks_cache)
-  --- @type Path
-  local cache_json = tasks_cache_path:joinpath(key .. '.json')
-  cache_json:write(data, 'w')
+  local cache_json = vim.fs.joinpath(tasks_cache_path, key .. '.json')
+  FileUtils.write(cache_json, data)
 end
 
 return M

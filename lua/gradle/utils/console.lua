@@ -1,14 +1,13 @@
-local Job = require('plenary.job')
 local GradleConfig = require('gradle.config')
 local Utils = require('gradle.utils')
-local uv = vim.loop
+local Queue = require('gradle.utils.queue')
 
 local M = {}
 
 local _buf
 local _win
 local _buf_name = 'gradle://GradleConsole'
-local _jobs = {} ---@type Job[]
+local _queue = Queue.new()
 
 local line_patterns = {
   { pattern = '^BUILD FAILED', hl = 'DiagnosticError', col_start = 0, col_end = 12 },
@@ -20,7 +19,10 @@ local line_patterns = {
 local function highlight_buf_line(buf, line, line_number)
   for _, item in ipairs(line_patterns) do
     if string.find(line, item.pattern) then
-      vim.api.nvim_buf_add_highlight(buf, 0, item.hl, line_number, item.col_start, item.col_end)
+      vim.api.nvim_buf_set_extmark(buf, GradleConfig.namespace, line_number, item.col_start, {
+        end_col = item.col_end,
+        hl_group = item.hl,
+      })
     end
   end
 end
@@ -65,30 +67,31 @@ local function setup_buffer()
   vim.api.nvim_create_autocmd({ 'BufUnload' }, {
     pattern = _buf_name,
     callback = function()
-      for _, job in ipairs(_jobs) do
-        if job and job.pid then
-          uv.kill(job.pid, 9)
-        end
-      end
+      _queue:cancel_all()
     end,
   })
 end
 
-local function enqueue_job(job, callback)
-  local count = #_jobs
-  table.insert(_jobs, job)
-  if count > 0 then
-    _jobs[count]:and_then(job)
-    if callback then
-      callback(Utils.PENDING_STATE)
+local function line_reader(on_line)
+  local buffer = ''
+  return function(_, data)
+    if not data then
+      if buffer ~= '' then
+        on_line(buffer)
+      end
+      return
     end
-  else
-    job:start()
+    buffer = buffer .. data
+    while true do
+      local nl = buffer:find('\n', 1, true)
+      if not nl then
+        break
+      end
+      local line = buffer:sub(1, nl - 1)
+      buffer = buffer:sub(nl + 1)
+      on_line(line)
+    end
   end
-end
-
-local function dequeue_job()
-  table.remove(_jobs, 1)
 end
 
 ---Execute gradle command
@@ -96,44 +99,55 @@ end
 ---@param args string[]
 ---@param show_output boolean
 ---@param callback? fun(state: string, ...)
-function M.execute_command(command, args, show_output, callback)
+---@param cwd? string
+function M.execute_command(command, args, show_output, callback, cwd)
   if show_output then
     setup_buffer()
   end
-  local job = Job:new({
-    command = command,
-    args = args,
-    on_stdout = function(_, data)
-      if show_output and _buf then
-        vim.schedule(function()
-          append_line(data)
-        end)
-      end
-    end,
-    on_stderr = function(_, data)
-      if show_output and _buf then
-        vim.schedule(function()
-          append_line(data)
-        end)
-      end
-    end,
-    on_start = function()
-      if show_output then
-        vim.schedule(function()
-          set_buf_modifiable(true)
-          if GradleConfig.options.console.clean_before_execution then
-            vim.api.nvim_buf_set_lines(_buf, 0, -1, false, {})
-          end
-          local message = '>> Executing: ' .. command .. ' ' .. table.concat(args, ' ')
-          append_line(message)
-          append_line('')
-        end)
-      end
-      if callback then
-        callback(Utils.STARTED_STATE)
-      end
-    end,
-    on_exit = function()
+  local output = {}
+  if _queue.active > 0 then
+    if callback then
+      callback(Utils.PENDING_STATE)
+    end
+  end
+  _queue
+    :enqueue(vim.list_extend({ command }, args), {
+      cwd = cwd,
+      text = true,
+      on_start = function()
+        if show_output then
+          vim.schedule(function()
+            set_buf_modifiable(true)
+            if GradleConfig.options.console.clean_before_execution then
+              vim.api.nvim_buf_set_lines(_buf, 0, -1, false, {})
+            end
+            local message = '>> Executing: ' .. command .. ' ' .. table.concat(args, ' ')
+            append_line(message)
+            append_line('')
+          end)
+        end
+        if callback then
+          callback(Utils.STARTED_STATE)
+        end
+      end,
+      stdout = line_reader(function(line)
+        table.insert(output, line)
+        if show_output then
+          vim.schedule(function()
+            append_line(line)
+          end)
+        end
+      end),
+      stderr = line_reader(function(line)
+        if show_output then
+          vim.schedule(function()
+            append_line(line)
+          end)
+        end
+      end),
+    })
+    :next(function(result)
+      result.output = output
       if show_output then
         vim.schedule(function()
           if not GradleConfig.options.console.clean_before_execution then
@@ -141,26 +155,16 @@ function M.execute_command(command, args, show_output, callback)
           end
           set_buf_modifiable(false)
         end)
-        dequeue_job()
       end
-    end,
-  })
-
-  if callback then
-    job:after_success(function(j, code, signal)
-      callback(Utils.SUCCEED_STATE, j, code, signal)
+      if callback then
+        callback(Utils.SUCCEED_STATE, result)
+      end
     end)
-
-    job:after_failure(function(j, code, signal)
-      callback(Utils.FAILED_STATE, j, code, signal)
+    :catch(function()
+      if callback then
+        callback(Utils.FAILED_STATE)
+      end
     end)
-  end
-
-  if show_output then
-    enqueue_job(job, callback)
-  else
-    job:start()
-  end
 end
 
 return M

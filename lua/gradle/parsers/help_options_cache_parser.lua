@@ -1,4 +1,4 @@
-local Path = require('plenary.path')
+local FileUtils = require('gradle.utils.fs')
 local Utils = require('gradle.utils')
 
 ---@class HelpOptionCache
@@ -10,10 +10,9 @@ local M = {}
 --- Parse the help opions cache
 --- @return HelpOptionCache[]
 M.parse = function()
-  --- @type Path
-  local help_options_json = Path:new(Utils.gradle_cache_path, 'help_options.json')
-  if help_options_json:exists() then
-    local data = help_options_json:read()
+  local help_options_json = vim.fs.joinpath(Utils.gradle_cache_path, 'help_options.json')
+  if FileUtils.is_file(help_options_json) then
+    local data = FileUtils.read(help_options_json)
     return vim.json.decode(data)
   end
   return {}
@@ -23,8 +22,8 @@ end
 --- @param options any
 M.dump = function(options)
   local options_text = vim.json.encode(options)
-  local help_options_json = Path:new(Utils.gradle_cache_path, 'help_options.json')
-  help_options_json:write(options_text, 'w')
+  local help_options_json = vim.fs.joinpath(Utils.gradle_cache_path, 'help_options.json')
+  FileUtils.write(help_options_json, options_text)
 end
 
 return M

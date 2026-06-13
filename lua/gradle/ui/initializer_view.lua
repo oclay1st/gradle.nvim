@@ -3,13 +3,13 @@ local Tree = require('nui.tree')
 local Line = require('nui.line')
 local Text = require('nui.text')
 local Popup = require('nui.popup')
-local Path = require('plenary.path')
 local event = require('nui.utils.autocmd').event
 local highlights = require('gradle.config.highlights')
 local GradleConfig = require('gradle.config')
 local Console = require('gradle.utils.console')
 local CommandBuilder = require('gradle.utils.cmd_builder')
 local Utils = require('gradle.utils')
+local FileUtils = require('gradle.utils.fs')
 
 ---@class InitializerView
 ---@field private _dsl_component NuiPopup
@@ -326,7 +326,7 @@ function InitializerView:_create_directory_component()
   options_tree:render()
   self._directory_component:on(event.BufWinEnter, function()
     for _, node in ipairs(options_tree:get_nodes()) do
-      node.path = node.path .. Path.path.sep .. self._project_name
+      node.path = vim.fs.joinpath(node.path, self._project_name)
     end
     options_tree:render()
   end)
@@ -353,9 +353,7 @@ function InitializerView:_create_directory_component()
 end
 
 function InitializerView:_create_project()
-  ---@type Path
-  local directory = Path:new(self._directory)
-  directory:mkdir()
+  FileUtils.mkdir(self._directory)
   local _callback = function(state)
     vim.schedule(function()
       if state == Utils.SUCCEED_STATE then
@@ -364,7 +362,7 @@ function InitializerView:_create_project()
           '&Yes\n&No'
         )
         if choice == 1 then
-          vim.api.nvim_set_current_dir(directory:absolute())
+          vim.api.nvim_set_current_dir(self._directory)
           require('gradle').reset_projects_view()
         end
       elseif state == Utils.FAILED_STATE then

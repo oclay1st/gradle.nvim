@@ -1,4 +1,3 @@
-local Path = require('plenary.path')
 local random = math.random
 
 local M = {}
@@ -8,13 +7,26 @@ M.SUCCEED_STATE = 'SUCCEED'
 M.FAILED_STATE = 'FAILED'
 M.PENDING_STATE = 'PENDING'
 
-M.gradle_cache_path = Path:new(vim.fn.stdpath('cache'), 'gradle'):absolute()
+M.path_separator = (function()
+  if jit then
+    local os = string.lower(jit.os)
+    if os ~= 'windows' then
+      return '/'
+    else
+      return '\\'
+    end
+  else
+    return package.config:sub(1, 1)
+  end
+end)()
+
+M.gradle_cache_path = vim.fs.joinpath(vim.fn.stdpath('cache'), 'gradle')
 
 M.gradle_local_repository_path =
-  Path:new(Path.path.home, '.gradle', 'caches', 'modules-2', 'files-2.1'):absolute()
+  vim.fs.joinpath(vim.fn.expand('~'), '.gradle', 'caches', 'modules-2', 'files-2.1')
 
 M.split_path = function(filepath)
-  local formatted = string.format('([^%s]+)', Path.path.sep)
+  local formatted = string.format('([^%s]+)', M.path_separator)
   local t = {}
   for str in string.gmatch(filepath, formatted) do
     table.insert(t, str)
@@ -46,16 +58,28 @@ end
 M.get_jar_file_path = function(group, name, version)
   local jar_directory = vim.fn.resolve(
     M.gradle_local_repository_path
-      .. Path.path.sep
+      .. M.path_separator
       .. group
-      .. Path.path.sep
+      .. M.path_separator
       .. name
-      .. Path.path.sep
+      .. M.path_separator
       .. version
   )
   return vim.fn.glob(
-    jar_directory .. Path.path.sep .. '*' .. Path.path.sep .. name .. '-' .. version .. '.jar'
+    jar_directory .. M.path_separator .. '*' .. M.path_separator .. name .. '-' .. version .. '.jar'
   )
+end
+
+M.matches_any = function(str, patterns)
+  if patterns == nil then
+    return false
+  end
+  if type(patterns) == 'string' then
+    patterns = { patterns }
+  end
+  return vim.iter(patterns):any(function(pattern)
+    return str:match(pattern) ~= nil
+  end)
 end
 
 return M

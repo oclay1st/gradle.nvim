@@ -1,7 +1,5 @@
-local scan = require('plenary.scandir')
 local Project = require('gradle.sources.project')
 local GradleConfig = require('gradle.config')
-local Path = require('plenary.path')
 local SettingsParser = require('gradle.parsers.settings_gradle_parser')
 local ProjectsCacheParser = require('gradle.parsers.projects_cache_parser')
 local TasksParser = require('gradle.parsers.tasks_parser')
@@ -13,6 +11,7 @@ local HelpOptionsCacheParser = require('gradle.parsers.help_options_cache_parser
 local FavoritesCacheParser = require('gradle.parsers.favorites_cache_parser')
 local CommandBuilder = require('gradle.utils.cmd_builder')
 local Utils = require('gradle.utils')
+local FileUtils = require('gradle.utils.fs')
 local Console = require('gradle.utils.console')
 
 local uv = vim.loop
@@ -59,9 +58,7 @@ local create_custom_commands = function()
 end
 
 local function create_project_from_build_file(build_gradle_path)
-  local build_gradle_file = Path:new(build_gradle_path)
-  local build_gradle_parent = build_gradle_file:parent()
-  local project_path = build_gradle_parent:absolute()
+  local project_path = vim.fs.dirname(build_gradle_path)
   local path_parts = Utils.split_path(project_path)
   local project_name = path_parts[#path_parts]
   local project = Project.new(project_path, project_name, build_gradle_path)
@@ -70,10 +67,8 @@ local function create_project_from_build_file(build_gradle_path)
 end
 
 local function create_project_from_settings_file(settings_gradle_path)
-  local settings_gradle_file = Path:new(settings_gradle_path)
-  local settings_gradle_parent = settings_gradle_file:parent()
-  local project_path = settings_gradle_parent:absolute()
-  local setting = SettingsParser.parse_file(settings_gradle_file:absolute())
+  local project_path = vim.fs.dirname(settings_gradle_path)
+  local setting = SettingsParser.parse_file(settings_gradle_path)
   local project_name = setting.project_name
   if not project_name then
     local path_parts = Utils.split_path(project_path)
@@ -86,9 +81,11 @@ local function create_project_from_settings_file(settings_gradle_path)
     if string.match(settings_gradle_path, '%.kts$') then
       build_gradle_name = build_gradle_name .. '.kts'
     end
-    local build_gradle = Path:new(project_path, module_name, build_gradle_name) ---@type Path
-    local build_gradle_path = build_gradle:absolute()
-    if build_gradle:exists() and not vim.tbl_contains(scanned_path_list, build_gradle_path) then
+    local build_gradle_path = vim.fs.joinpath(project_path, module_name, build_gradle_name)
+    if
+      FileUtils.is_file(build_gradle_path)
+      and not vim.tbl_contains(scanned_path_list, build_gradle_path)
+    then
       local module = create_project_from_build_file(build_gradle_path)
       project:add_module(module)
       table.insert(scanned_path_list, build_gradle_path)
@@ -102,7 +99,7 @@ end
 ---@param projects Project[]
 ---@return Project | nil
 local function find_project(file_path, projects)
-  local _root_path = Path:new(file_path):parent():absolute()
+  local _root_path = vim.fs.dirname(file_path)
   for _, item in ipairs(projects) do
     if item.root_path == _root_path then
       return item
@@ -117,7 +114,7 @@ M.scan_projects = function(base_path, callback)
   local projects = {}
   scanned_path_list = {}
   custom_commands = create_custom_commands()
-  scan.scan_dir_async(base_path, {
+  FileUtils.scan_dir_async(base_path, {
     search_pattern = { build_gradle_file_pattern, settings_gradle_file_pattern },
     depth = GradleConfig.options.project_scanner_depth,
     on_insert = function(gradle_file_path)
@@ -168,11 +165,11 @@ M.load_project_tasks = function(project_path, force, callback)
     return
   end
   local show_output = GradleConfig.options.console.show_tasks_load_execution
-  local _callback = function(state, job)
+  local _callback = function(state, result)
     vim.schedule(function()
       local tasks
       if state == Utils.SUCCEED_STATE then
-        local content_lines = job:result()
+        local content_lines = result.output
         tasks = TasksParser.parse(content_lines)
         M.create_tasks_cache(project_path, tasks)
       elseif state == Utils.FAILED_STATE then
@@ -221,11 +218,11 @@ M.load_project_dependencies = function(project_path, force, callback)
     return
   end
   local show_output = GradleConfig.options.console.show_dependencies_load_execution
-  local _callback = function(state, job)
+  local _callback = function(state, result)
     vim.schedule(function()
       local dependencies
       if state == Utils.SUCCEED_STATE then
-        local output_lines = job:result()
+        local output_lines = result.output
         dependencies = DependencyTreeParser.parse(output_lines)
         M.set_dependencies_size(dependencies)
         M.create_dependencies_cache(project_path, dependencies)
@@ -293,17 +290,20 @@ M.load_help_options = function(force, callback)
   if not force and M.load_help_options_cache(callback) then
     return
   end
-  local _callback = function(state, job)
+  local _callback = function(result)
+    local state = result.code == 0 and Utils.SUCCEED_STATE or Utils.FAILED_STATE
     local help_options
     if state == Utils.SUCCEED_STATE then
-      local output_lines = job:result()
+      local output_lines = vim.split(result.stdout, '\n')
       help_options = HelpOptionsParser.parse(output_lines)
       M.create_help_options_cache(help_options)
+    else
+      vim.notify('Error loading help options.', vim.log.levels.ERROR)
     end
     callback(state, help_options)
   end
   local command = CommandBuilder.build_gradle_help_cmd()
-  Console.execute_command(command.cmd, command.args, false, _callback)
+  vim.system(vim.list_extend({ command.cmd }, command.args), { text = true }, _callback)
 end
 
 M.load_help_options_cache = function(callback)
