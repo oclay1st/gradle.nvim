@@ -81,6 +81,7 @@ function DependencyTreeParser.parse(dependencies_output_lines)
   local adding_dependency = false
   local current_config
   for _, line in ipairs(dependencies_output_lines) do
+    line = line:gsub('\r$', '')
     local configuration, description = string.match(line, '(%w+)%s%-%s(.*)')
     if configuration and description and not string.find(description, '%(n%)$') then
       current_config = configuration
