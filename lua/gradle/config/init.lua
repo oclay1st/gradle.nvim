@@ -11,6 +11,7 @@ M.namespace = vim.api.nvim_create_namespace('gradle')
 ---@field position string
 ---@field size integer
 ---@field custom_commands CustomCommand[]
+---@field open_in_tabpage boolean
 
 ---@class ProjectNameWin
 ---@field border Border
@@ -91,6 +92,7 @@ local defaultOptions = {
     custom_commands = {},
     position = 'right',
     size = 66,
+    open_in_tabpage = false,
   },
   dependencies_view = {
     size = {

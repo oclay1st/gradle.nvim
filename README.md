@@ -88,6 +88,7 @@
     },
     position = 'right',
     size = 65,
+    open_in_tabpage = false,
   },
   dependencies_view = {
     size = { -- see the nui doc for details about size

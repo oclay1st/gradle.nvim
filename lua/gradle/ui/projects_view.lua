@@ -45,7 +45,6 @@ local node_type_props = {
 ---@field private _tree NuiTree
 ---@field private _menu_header_line NuiLine
 ---@field private _projects_header_line NuiLine
----@field private _is_visible boolean
 ---@field projects Project[]
 local ProjectView = {}
 
@@ -528,7 +527,9 @@ function ProjectView:_render_win()
     },
   })
   self._win:mount()
-  self._is_visible = true
+  if GradleConfig.options.projects_view.open_in_tabpage then
+    vim.cmd.wincmd('T')
+  end
 end
 
 ---Mount the explorer component
@@ -548,19 +549,21 @@ end
 
 ---Hide the ui
 function ProjectView:hide()
-  self._win:hide()
-  self._is_visible = false
+  vim.api.nvim_win_hide(vim.fn.bufwinid(self._win.bufnr))
 end
 
 ---Show the ui
 function ProjectView:show()
-  self._win:show()
-  self._is_visible = true
+  if not self._win.bufnr or vim.fn.bufwinid(self._win.bufnr) == -1 then
+    self:mount()
+  else
+    self._win:show()
+  end
 end
 
 ---Toggle the ui
 function ProjectView:toggle()
-  if self._is_visible then
+  if self._win.bufnr and vim.fn.bufwinid(self._win.bufnr) ~= -1 then
     self:hide()
   else
     self:show()
@@ -570,7 +573,6 @@ end
 ---Show the ui
 function ProjectView:unmount()
   self._win:unmount()
-  self._is_visible = false
 end
 
 ---Set project loading
