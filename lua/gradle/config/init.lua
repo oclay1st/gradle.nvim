@@ -61,6 +61,7 @@ M.namespace = vim.api.nvim_create_namespace('gradle')
 ---@field show_tasks_load_execution boolean
 ---@field show_project_create_execution boolean
 ---@field clean_before_execution boolean
+---@field open_in_tabpage boolean
 
 ---@class ExecutionViewConfig
 ---@field size any
@@ -204,6 +205,7 @@ local defaultOptions = {
     show_tasks_load_execution = false,
     show_project_create_execution = false,
     clean_before_execution = true,
+    open_in_tabpage = true,
   },
   cache = {
     enable_tasks_cache = true,

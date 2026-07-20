@@ -6,6 +6,7 @@ local M = {}
 
 local _buf
 local _win
+local _tab
 local _buf_name = 'gradle://GradleConsole'
 local _queue = Queue.new()
 
@@ -45,31 +46,31 @@ local append_line = function(line)
 end
 
 local function setup_buffer()
-  if not _win or _win == 0 or not vim.api.nvim_win_is_valid(_win) then
-    _win = vim.fn.win_getid(vim.fn.winnr('#'))
+  if not _buf or not vim.api.nvim_buf_is_loaded(_buf) then
+    _buf = vim.api.nvim_create_buf(true, true)
+    vim.api.nvim_buf_set_name(_buf, _buf_name)
+    vim.api.nvim_set_option_value('buftype', 'nofile', { buf = _buf })
+    vim.api.nvim_set_option_value('swapfile', false, { buf = _buf })
+    vim.api.nvim_set_option_value('filetype', 'gradle_console', { buf = _buf })
+    vim.api.nvim_set_option_value('undolevels', -1, { buf = _buf })
+    vim.api.nvim_create_autocmd({ 'BufUnload' }, {
+      pattern = _buf_name,
+      callback = function()
+        _queue:cancel_all()
+      end,
+    })
+  end
+  if _win and vim.api.nvim_win_is_valid(_win) then
+  elseif not GradleConfig.options.console.open_in_tabpage then
+    _win = vim.fn.win_getid()
+  else
+    if not _tab or not vim.api.nvim_tabpage_is_valid(_tab) then
+      _tab = vim.api.nvim_open_tabpage(_buf, true, {})
+    end
+    _win = vim.api.nvim_tabpage_get_win(_tab)
   end
   vim.api.nvim_set_current_win(_win)
-  if _buf and vim.api.nvim_buf_is_valid(_buf) then
-    if not vim.api.nvim_buf_is_loaded(_buf) then
-      vim.api.nvim_buf_delete(_buf, { force = true, unload = false })
-    else
-      vim.api.nvim_set_current_buf(_buf)
-      return --nothing to do
-    end
-  end
-  _buf = vim.api.nvim_create_buf(true, true)
-  vim.api.nvim_buf_set_name(_buf, _buf_name)
-  vim.api.nvim_set_option_value('buftype', 'nofile', { buf = _buf })
-  vim.api.nvim_set_option_value('swapfile', false, { buf = _buf })
-  vim.api.nvim_set_option_value('filetype', 'gradle_console', { buf = _buf })
-  vim.api.nvim_set_option_value('undolevels', -1, { buf = _buf })
   vim.api.nvim_set_current_buf(_buf)
-  vim.api.nvim_create_autocmd({ 'BufUnload' }, {
-    pattern = _buf_name,
-    callback = function()
-      _queue:cancel_all()
-    end,
-  })
 end
 
 local function line_reader(on_line)
