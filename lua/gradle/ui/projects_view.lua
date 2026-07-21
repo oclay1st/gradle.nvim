@@ -10,6 +10,8 @@ local Console = require('gradle.utils.console')
 local GradleConfig = require('gradle.config')
 local highlights = require('gradle.config.highlights')
 
+local _buf_name = 'gradle://GradleProjects'
+
 local node_type_props = {
   custom_command = {
     icon = GradleConfig.options.icons.command,
@@ -527,6 +529,8 @@ function ProjectView:_render_win()
     },
   })
   self._win:mount()
+  pcall(vim.cmd.bwipeout, { _buf_name, bang = true })
+  vim.api.nvim_buf_set_name(self._win.bufnr, _buf_name)
   if GradleConfig.options.projects_view.open_in_tabpage then
     vim.cmd.wincmd('T')
   end
