@@ -205,7 +205,7 @@ local defaultOptions = {
     show_tasks_load_execution = false,
     show_project_create_execution = false,
     clean_before_execution = true,
-    open_in_tabpage = true,
+    open_in_tabpage = false,
   },
   cache = {
     enable_tasks_cache = true,
