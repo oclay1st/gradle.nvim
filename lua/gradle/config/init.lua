@@ -11,6 +11,7 @@ M.namespace = vim.api.nvim_create_namespace('gradle')
 ---@field position string
 ---@field size integer
 ---@field custom_commands CustomCommand[]
+---@field open_in_tabpage boolean
 
 ---@class ProjectNameWin
 ---@field border Border
@@ -60,6 +61,7 @@ M.namespace = vim.api.nvim_create_namespace('gradle')
 ---@field show_tasks_load_execution boolean
 ---@field show_project_create_execution boolean
 ---@field clean_before_execution boolean
+---@field open_in_tabpage boolean
 
 ---@class ExecutionViewConfig
 ---@field size any
@@ -91,6 +93,7 @@ local defaultOptions = {
     custom_commands = {},
     position = 'right',
     size = 66,
+    open_in_tabpage = false,
   },
   dependencies_view = {
     size = {
@@ -202,6 +205,7 @@ local defaultOptions = {
     show_tasks_load_execution = false,
     show_project_create_execution = false,
     clean_before_execution = true,
+    open_in_tabpage = false,
   },
   cache = {
     enable_tasks_cache = true,

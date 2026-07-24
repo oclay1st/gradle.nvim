@@ -71,6 +71,7 @@
     show_tasks_load_execution = false,
     show_project_create_execution = false,
     clean_before_execution = true,
+    open_in_tabpage = true,
   },
   cache = {
     enable_tasks_cache = true,
@@ -88,6 +89,7 @@
     },
     position = 'right',
     size = 65,
+    open_in_tabpage = false,
   },
   dependencies_view = {
     size = { -- see the nui doc for details about size
