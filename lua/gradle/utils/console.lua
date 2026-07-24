@@ -62,7 +62,7 @@ local function setup_buffer()
   end
   if _win and vim.api.nvim_win_is_valid(_win) then
   elseif not GradleConfig.options.console.open_in_tabpage then
-    _win = vim.fn.win_getid()
+    _win = vim.fn.win_getid(vim.fn.winnr('#'))
   else
     if not _tab or not vim.api.nvim_tabpage_is_valid(_tab) then
       _tab = vim.api.nvim_open_tabpage(_buf, true, {})

@@ -553,16 +553,12 @@ end
 
 ---Hide the ui
 function ProjectView:hide()
-  vim.api.nvim_win_hide(vim.fn.bufwinid(self._win.bufnr))
+  self._win:hide()
 end
 
 ---Show the ui
 function ProjectView:show()
-  if not self._win.bufnr or vim.fn.bufwinid(self._win.bufnr) == -1 then
-    self:mount()
-  else
-    self._win:show()
-  end
+  self._win:show()
 end
 
 ---Toggle the ui
